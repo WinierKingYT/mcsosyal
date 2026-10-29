@@ -62,6 +62,10 @@ messages:
   # @isim herkese böyle görünür; okuyanın kendi adıysa mention-self kullanılır.
   mention: "<aqua><text></aqua>"
   mention-self: "<yellow><bold><text></bold></yellow>"
-  sound-on: "<gray><type> sesi <green>açık</green>.</gray>"
+  # [item] / [eşya]: <item> eşyanın adı (üstüne gelince özellikleri), <amount> adedi.
+  item: "<item>"
+  item-many: "<item><gray> x<amount></gray>"
+  item-empty: "<gray>[boş el]</gray>"
+  sound-on:"<gray><type> sesi <green>açık</green>.</gray>"
   sound-off: "<gray><type> sesi <red>kapalı</red>.</gray>"
   name-hover:"<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"

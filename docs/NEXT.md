@@ -10,6 +10,9 @@
 - 2026-10-29: Etiketleme. `@isim` herkese renkli görünür ve o kişiye ses gider; adın `@`'siz geçmesi de
   sende vurgulanır (renderer izleyiciye göre çalışıyor). Özel mesaja ses eklendi. `/bildirim etiket|mesaj`
   sesleri kapatır (bellekte). Testler 11/11. Oyunda denenmedi.
+- 2026-10-29: Eşya gösterme. `[item]` / `[eşya]` eldeki eşyayı gösterir (Paper `ItemStack#displayName()`,
+  üstüne gelince vanilla eşya bilgisi; RPG eşyalarının lore'u da otomatik görünür). Mesaj başına ilk etiket.
+  Örs ismi filtreden geçer. Testler 13/13. Oyunda denenmedi: hover'da eşya bilgisinin çıktığını kontrol et.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -27,7 +30,7 @@
 - [ ] Kanal susturma (oyuncu tercihi; kalıcı olması için veritabanı katmanı gerekir)
 - [ ] Yardım kanalında "Rehber" etiketi (yetkili rozetleriyle birlikte yapılabilir)
 - [x] Etiketleme `@isim` + isim vurgusu + bildirim sesi (`@parti` parti sistemiyle birlikte)
-- [ ] Eşya gösterme `[item]` (önce vanilla eşya hover'ı, sonra RPG item arayüzü)
+- [x] Eşya gösterme `[item]` / `[eşya]` (RPG eşyaları ItemStack olduğu sürece ek arayüz gerekmez)
 - [ ] Konum paylaşma `[konum]`
 - [ ] Yetkili rozetleri
 - [ ] Social spy

@@ -25,6 +25,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ChatListener implements Listener {
@@ -73,6 +74,11 @@ public final class ChatListener implements Listener {
             event.setCancelled(true);
             return;
         }
+        Component item = ItemShare.hasToken(filtered) ? sharedItem(sender) : null;
+        if (ItemShare.hasToken(filtered) && item == null) {
+            event.setCancelled(true);
+            return;
+        }
 
         // Oyuncu metni düz metin olarak girer, MiniMessage etiketleri çalışmaz.
         event.message(Component.text(filtered));
@@ -81,7 +87,7 @@ public final class ChatListener implements Listener {
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         // Her izleyici kendi adını vurgulu görür, bu yüzden renderer izleyiciye göre çalışır.
         ChatRenderer renderer = (source, displayName, message, viewer) ->
-                render(sender, channel, tags, mentionMessage(filtered, mentions, viewer));
+                render(sender, channel, tags, withItem(mentionMessage(filtered, mentions, viewer), item));
         event.renderer(renderer);
 
         Set<Audience> viewers = Set.copyOf(event.viewers());
@@ -102,16 +108,22 @@ public final class ChatListener implements Listener {
         if (filtered == null) {
             return;
         }
+        Component item = ItemShare.hasToken(filtered) ? sharedItem(sender) : null;
+        if (ItemShare.hasToken(filtered) && item == null) {
+            return;
+        }
         Component tags = tagProvider.tags(sender);
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         Set<Player> viewers = new HashSet<>();
         for (Player viewer : Bukkit.getOnlinePlayers()) {
             if (canSee(channel, sender, viewer)) {
                 viewers.add(viewer);
-                viewer.sendMessage(render(sender, channel, tags, mentionMessage(filtered, mentions, viewer)));
+                viewer.sendMessage(render(sender, channel, tags,
+                        withItem(mentionMessage(filtered, mentions, viewer), item)));
             }
         }
-        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, Component.text(filtered)));
+        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags,
+                withItem(Component.text(filtered), item)));
         notifyMentioned(sender, mentions, viewers::contains);
     }
 
@@ -181,6 +193,37 @@ public final class ChatListener implements Listener {
             return false;
         }
         return channel.radius() <= 0 || inRange(sender, viewer, channel.radius());
+    }
+
+    /**
+     * Eldeki eşyanın sohbet görünümü (üstüne gelince eşya bilgisi). Örs ile verilmiş isim filtreye takılırsa
+     * oyuncuya sebebi söylenir ve null döner.
+     */
+    // shortcut: envanter async thread'den okunup kopyalanıyor (sohbet plugin'lerinde yaygın); sorun çıkarsa ana thread'e taşı.
+    private Component sharedItem(Player sender) {
+        ItemStack hand = sender.getInventory().getItemInMainHand().clone();
+        if (hand.isEmpty()) {
+            return messages.get("item-empty");
+        }
+        Component customName = hand.hasItemMeta() ? hand.getItemMeta().customName() : null;
+        if (customName != null && !sender.hasPermission(BYPASS)) {
+            ChatFilter.Verdict verdict = filter.checkContent(PlainTextComponentSerializer.plainText().serialize(customName));
+            if (verdict != ChatFilter.Verdict.OK) {
+                sender.sendMessage(messages.get(messageKey(verdict)));
+                return null;
+            }
+        }
+        return messages.get(hand.getAmount() > 1 ? "item-many" : "item",
+                Placeholder.component("item", hand.displayName()),
+                Placeholder.unparsed("amount", String.valueOf(hand.getAmount())));
+    }
+
+    // Mesaj başına sadece ilk [item] değiştirilir, gerisi düz metin kalır (hover spam'ine karşı).
+    private static Component withItem(Component message, Component item) {
+        if (item == null) {
+            return message;
+        }
+        return message.replaceText(config -> config.match(ItemShare.TOKEN).once().replacement(item));
     }
 
     /** "@isim" herkese renkli görünür; izleyicinin kendi adı (@'li ya da @'siz) ona vurgulu görünür. */
