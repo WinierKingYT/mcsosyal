@@ -20,7 +20,6 @@ import org.bukkit.Location;
 import org.bukkit.block.Container;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BlockStateMeta;
@@ -30,9 +29,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * Sohbette [i], [inv] ve [konum] paylaşımları. Eşya ve envantere tıklayınca salt okunur bir pencere açılır;
- * pencere paylaşım anının kopyasını gösterir, içinden eşya alınamaz. Envanteri düzenleme izni olan yetkili
- * tıklarsa oyuncunun gerçek envanteri canlı ve düzenlenebilir açılır.
+ * Sohbette [i], [inv] ve [konum] paylaşımları. Eşyanın bilgisi üstüne gelince görünür. Envantere tıklayınca
+ * salt okunur bir pencere açılır; pencere paylaşım anının kopyasını gösterir, içinden eşya alınamaz. Envanteri
+ * düzenleme izni olan yetkili tıklarsa aynı düzen canlı ve düzenlenebilir açılır (LiveInventoryView).
  */
 public final class Showcase {
 
@@ -51,8 +50,6 @@ public final class Showcase {
 
     private static final int MAX_ITEM_DEPTH = 2;
     private static final Duration VIEW_LIFETIME = Duration.ofMinutes(10);
-    // Eşya: 3x3 pencere (Minecraft'taki en küçük 9 yuvalı pencere), eşya ortada. Envanter düzeni InventoryLayout'ta.
-    private static final int ITEM_VIEW_SLOT = 4;
 
     private final JavaPlugin plugin;
     private final Messages messages;
@@ -86,7 +83,7 @@ public final class Showcase {
             if (!passesFilter(sender, List.of(hand))) {
                 return null;
             }
-            item = itemComponent(sender, hand);
+            item = itemComponent(hand);
         }
         if (ChatTokens.has(ChatTokens.INVENTORY, text)) {
             PlayerInventory live = sender.getInventory();
@@ -100,20 +97,14 @@ public final class Showcase {
         return new Shared(item, inventory, location);
     }
 
-    private Component itemComponent(Player sender, ItemStack hand) {
+    /** Üstüne gelince Minecraft'ın kendi eşya kutusu tüm bilgileri gösterir; tıklama penceresi yok. */
+    private Component itemComponent(ItemStack hand) {
         if (hand.isEmpty()) {
             return messages.get("item-empty");
         }
-        Component title = messages.get("view-item-title", Placeholder.unparsed("name", sender.getName()));
-        ClickEvent open = ClickEvent.callback(audience -> {
-            if (audience instanceof Player viewer) {
-                new Menu(InventoryType.DISPENSER, title).set(ITEM_VIEW_SLOT, hand.clone()).open(viewer);
-            }
-        }, options -> options.uses(ClickCallback.UNLIMITED_USES).lifetime(VIEW_LIFETIME));
         return messages.get(hand.getAmount() > 1 ? "item-many" : "item",
-                        Placeholder.component("item", hand.displayName()),
-                        Placeholder.unparsed("amount", String.valueOf(hand.getAmount())))
-                .clickEvent(open);
+                Placeholder.component("item", hand.displayName()),
+                Placeholder.unparsed("amount", String.valueOf(hand.getAmount())));
     }
 
     private Component inventoryComponent(Player sender, ItemStack[] layout) {

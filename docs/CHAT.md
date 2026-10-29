@@ -23,7 +23,7 @@
 - **İlk giriş:** sunucuya ilk kez girene herkese karşılama mesajı.
 
 ## Etkileşim
-- **Eşya gösterme:** `[i]` / `[item]` / `[eşya]` → elindeki eşya, üstüne gelince özellikleri, tıklayınca 3x3 pencere.
+- **Eşya gösterme:** `[i]` / `[item]` / `[eşya]` → elindeki eşya, üstüne gelince tüm özellikleri (pencere yok).
 - **Envanter gösterme:** `[inv]` / `[envanter]` → tıklayınca 5 sıralık salt okunur pencere: 3 sıra çanta,
   1 sıra hızlı çubuk, en altta kask, göğüslük, pantolon, ayakkabı, ikinci el (boş zırh yuvasında gri cam).
   Pencere paylaşım anını gösterir (o anki eşyalar filtreden geçti; sonradan konan eşya geçmemiş olur).

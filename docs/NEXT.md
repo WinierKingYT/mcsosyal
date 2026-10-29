@@ -42,6 +42,7 @@
   panel eşyalarına açıklamalar (kanal `description`), ticaret bekleme 3 sn, spam yükseltmesi (uyarı → 5 dk
   susturma, `ChatMutes`, `/chat unmute`). Paylaşılan envanter bilerek o anın kopyası. 3x3 en küçük 9'luk pencere,
   altındaki oyuncu envanteri gizlenemez. Testler 35/35. Oyunda denenmedi.
+- 2026-10-29: `[i]` tıklama penceresi kaldırıldı (istek üzerine); bilgi hover'da tam görünüyor.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -66,7 +67,7 @@
 
 ## Oyunda doğrulanacak
 - [ ] Örs ismi `site.com` olan eşya op değilken `[i]` ile engelleniyor mu
-- [ ] Eşyaya ve `[inv]`'e tıklayınca pencere açılıyor, içinden eşya alınamıyor mu (shift-click dahil)
+- [ ] `[inv]`'e tıklayınca pencere açılıyor, içinden eşya alınamıyor mu (shift-click dahil)
 - [ ] Op olarak başkasının `[inv]`'i: aynı düzen, camlar ellenemiyor, değişiklik oyuncuya yansıyor, eşya kaybolmuyor
 - [ ] Spam: 5. engellenen denemede turuncu uyarı, 10.'da 5 dk susturma; `/chat unmute`
 - [ ] `/sosyal`: kanal seçince normal sohbet o kanala gidiyor mu, gizlenen kanal görünmüyor mu

@@ -131,7 +131,6 @@ messages:
   # [inv] / [envanter]: tıklayınca envanter salt okunur pencerede açılır. Eşyaya tıklamak da pencere açar.
   inventory: "<gold>[Envanter: <name>]</gold>"
   inventory-hover: "<gray>Tıkla: envanteri gör</gray>"
-  view-item-title: "<name> - Eşya"
   view-inventory-title: "<name> - Envanter"
   view-empty-armor: "<gray><slot> yok</gray>"
   view-empty-armor-lore: "<dark_gray>Bu yuva boş."
