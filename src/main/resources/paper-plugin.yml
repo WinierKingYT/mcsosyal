@@ -9,6 +9,9 @@ permissions:
   rpg.social.chat.moderate:
     description: Sohbeti temizleme ve kilitleme
     default: op
+  rpg.social.chat.staff:
+    description: Yetkili sohbet kanalını görme ve yazma (/sc)
+    default: op
   rpg.social.chat.bypass:
     description: Filtre, bekleme süresi ve kilide takılmama
     default: op

@@ -18,7 +18,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** /chat clear|lock, /msg, /r, /ignore. */
+/** /chat clear|lock, /msg, /r, /ignore ve kanal komutları (/l, /t, /yardım, /sc). */
 public final class ChatCommands {
 
     public static final String MODERATE = "rpg.social.chat.moderate";
@@ -79,7 +79,29 @@ public final class ChatCommands {
                         return Command.SINGLE_SUCCESS;
                     }))
                     .build(), "Bir oyuncuyu engelle ya da engeli kaldır", List.of("engelle"));
+
+            registerChannel(commands, chat, "l", ChatChannel.LOCAL, "Yerel kanala yaz", List.of());
+            registerChannel(commands, chat, "t", "trade", "Ticaret kanalına yaz", List.of("ticaret"));
+            registerChannel(commands, chat, "yardım", "help", "Yardım kanalına yaz", List.of("yardim"));
+            registerChannel(commands, chat, "sc", "staff", "Yetkili kanalına yaz", List.of());
         });
+    }
+
+    private static void registerChannel(Commands commands, ChatListener chat, String name, String channelKey,
+                                        String description, List<String> aliases) {
+        ChatChannel channel = chat.channel(channelKey);
+        if (channel == null) {
+            return; // config'den silinmiş kanalın komutu da olmaz
+        }
+        commands.register(Commands.literal(name)
+                .requires(src -> src.getSender() instanceof Player player
+                        && (channel.permission() == null || player.hasPermission(channel.permission())))
+                .then(Commands.argument("mesaj", StringArgumentType.greedyString()).executes(ctx -> {
+                    chat.sendToChannel((Player) ctx.getSource().getSender(), channelKey,
+                            StringArgumentType.getString(ctx, "mesaj"));
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .build(), description, aliases);
     }
 
     private static Player target(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

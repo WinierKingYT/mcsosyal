@@ -46,8 +46,9 @@ public final class PrivateMessages {
             from.sendMessage(messages.get("msg-ignored"));
             return;
         }
-        if (!from.hasPermission(ChatListener.BYPASS) && filter.containsBannedWord(text)) {
-            from.sendMessage(messages.get("banned-word"));
+        ChatFilter.Verdict verdict = filter.checkContent(text);
+        if (!from.hasPermission(ChatListener.BYPASS) && verdict != ChatFilter.Verdict.OK) {
+            from.sendMessage(messages.get(ChatListener.messageKey(verdict)));
             return;
         }
         from.sendMessage(messages.get("msg-to",

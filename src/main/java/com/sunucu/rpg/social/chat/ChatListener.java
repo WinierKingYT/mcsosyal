@@ -4,6 +4,8 @@ import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.social.TagProvider;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -24,10 +26,8 @@ public final class ChatListener implements Listener {
     private final ChatFilter filter;
     private final PrivateMessages privateMessages;
     private final String format;
-    private final Component globalTag;
-    private final Component localTag;
     private final String localPrefix;
-    private final double localRadiusSquared;
+    private final Map<String, ChatChannel> channels = new LinkedHashMap<>();
     private volatile TagProvider tagProvider = TagProvider.NONE;
     private volatile boolean locked;
 
@@ -36,55 +36,61 @@ public final class ChatListener implements Listener {
         this.filter = filter;
         this.privateMessages = privateMessages;
         this.format = chat.getString("format", "<name>: <message>");
-        this.globalTag = Messages.parse(chat.getString("channels.global", "G"));
-        this.localTag = Messages.parse(chat.getString("channels.local", "Y"));
         this.localPrefix = chat.getString("local-prefix", "!");
-        double radius = chat.getDouble("local-radius", 64);
-        this.localRadiusSquared = radius * radius;
+        ConfigurationSection section = chat.getConfigurationSection("channels");
+        if (section != null) {
+            for (String key : section.getKeys(false)) {
+                channels.put(key, ChatChannel.fromConfig(key, section.getConfigurationSection(key)));
+            }
+        }
+        channels.putIfAbsent(ChatChannel.GLOBAL, new ChatChannel(ChatChannel.GLOBAL, Component.text("G"), 2000, null, 0));
+        channels.putIfAbsent(ChatChannel.LOCAL, new ChatChannel(ChatChannel.LOCAL, Component.text("Y"), 2000, null, 64));
     }
 
+    /** Normal sohbet: global, ya da önek varsa yerel. İmzalı sohbet korunur. */
     @EventHandler(ignoreCancelled = true)
     public void onChat(AsyncChatEvent event) {
         Player sender = event.getPlayer();
-        boolean bypass = sender.hasPermission(BYPASS);
-        if (locked && !bypass) {
+        String text = PlainTextComponentSerializer.plainText().serialize(event.message());
+        boolean local = text.startsWith(localPrefix) && text.length() > localPrefix.length();
+        ChatChannel channel = channels.get(local ? ChatChannel.LOCAL : ChatChannel.GLOBAL);
+        String filtered = prepare(sender, channel, local ? text.substring(localPrefix.length()).strip() : text);
+        if (filtered == null) {
             event.setCancelled(true);
-            sender.sendMessage(messages.get("chat-locked"));
             return;
         }
 
-        String text = PlainTextComponentSerializer.plainText().serialize(event.message());
-        boolean local = text.startsWith(localPrefix) && text.length() > localPrefix.length();
-        if (local) {
-            text = text.substring(localPrefix.length()).strip();
-        }
-        if (!bypass) {
-            ChatFilter.Result result = filter.check(sender.getUniqueId(), text, System.currentTimeMillis());
-            if (result.verdict() != ChatFilter.Verdict.OK) {
-                event.setCancelled(true);
-                sender.sendMessage(messages.get(switch (result.verdict()) {
-                    case COOLDOWN -> "cooldown";
-                    case DUPLICATE -> "duplicate";
-                    default -> "banned-word";
-                }));
-                return;
-            }
-            text = result.text();
-        }
-
         // Oyuncu metni düz metin olarak girer, MiniMessage etiketleri çalışmaz.
-        event.message(Component.text(text));
-        event.viewers().removeIf(viewer -> viewer instanceof Player player
-                && (privateMessages.isIgnoring(player, sender) || local && !inRange(sender, player)));
-
-        Component channel = local ? localTag : globalTag;
+        event.message(Component.text(filtered));
+        event.viewers().removeIf(viewer -> viewer instanceof Player player && !canSee(channel, sender, player));
         Component tags = tagProvider.tags(sender);
-        Component name = nameComponent(sender);
-        event.renderer(ChatRenderer.viewerUnaware((source, displayName, message) -> Messages.parse(format,
-                Placeholder.component("channel", channel),
-                Placeholder.component("tags", tags),
-                Placeholder.component("name", name),
-                Placeholder.component("message", message))));
+        event.renderer(ChatRenderer.viewerUnaware((source, displayName, message) -> render(sender, channel, tags, message)));
+    }
+
+    /**
+     * Komutla belirli bir kanala gönderim (/t, /yardım, /sc, /l). Ana thread'den çağrılır.
+     * Bu mesajlar sistem mesajı olarak gider, imzalı sohbet değildir.
+     */
+    public void sendToChannel(Player sender, String channelKey, String text) {
+        ChatChannel channel = channels.get(channelKey);
+        if (channel == null) {
+            return;
+        }
+        String filtered = prepare(sender, channel, text);
+        if (filtered == null) {
+            return;
+        }
+        Component line = render(sender, channel, tagProvider.tags(sender), Component.text(filtered));
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            if (canSee(channel, sender, viewer)) {
+                viewer.sendMessage(line);
+            }
+        }
+        Bukkit.getConsoleSender().sendMessage(line);
+    }
+
+    public ChatChannel channel(String key) {
+        return channels.get(key);
     }
 
     @EventHandler
@@ -110,6 +116,55 @@ public final class ChatListener implements Listener {
         this.tagProvider = provider == null ? TagProvider.NONE : provider;
     }
 
+    /** Kilit, izin ve filtre kontrolü. Mesaj gönderilemezse oyuncuya sebebini söyler ve null döner. */
+    private String prepare(Player sender, ChatChannel channel, String text) {
+        boolean bypass = sender.hasPermission(BYPASS);
+        if (channel.permission() != null && !sender.hasPermission(channel.permission())) {
+            return null;
+        }
+        if (locked && !bypass && channel.permission() == null) {
+            sender.sendMessage(messages.get("chat-locked"));
+            return null;
+        }
+        if (bypass) {
+            return text;
+        }
+        ChatFilter.Result result = filter.check(sender.getUniqueId(), channel.key(), channel.cooldownMillis(),
+                text, System.currentTimeMillis());
+        if (result.verdict() != ChatFilter.Verdict.OK) {
+            sender.sendMessage(messages.get(messageKey(result.verdict())));
+            return null;
+        }
+        return result.text();
+    }
+
+    static String messageKey(ChatFilter.Verdict verdict) {
+        return switch (verdict) {
+            case COOLDOWN -> "cooldown";
+            case DUPLICATE -> "duplicate";
+            case ADVERTISEMENT -> "advertisement";
+            case BANNED_WORD, OK -> "banned-word";
+        };
+    }
+
+    private boolean canSee(ChatChannel channel, Player sender, Player viewer) {
+        if (privateMessages.isIgnoring(viewer, sender)) {
+            return false;
+        }
+        if (channel.permission() != null && !viewer.hasPermission(channel.permission())) {
+            return false;
+        }
+        return channel.radius() <= 0 || inRange(sender, viewer, channel.radius());
+    }
+
+    private Component render(Player sender, ChatChannel channel, Component tags, Component message) {
+        return Messages.parse(format,
+                Placeholder.component("channel", channel.tag()),
+                Placeholder.component("tags", tags),
+                Placeholder.component("name", nameComponent(sender)),
+                Placeholder.component("message", message));
+    }
+
     private Component nameComponent(Player player) {
         return Component.text(player.getName())
                 .hoverEvent(messages.get("name-hover", Placeholder.unparsed("name", player.getName())))
@@ -117,8 +172,8 @@ public final class ChatListener implements Listener {
     }
 
     // shortcut: konum async thread'den okunuyor (yaygın ve pratikte güvenli); sorun çıkarsa konumları ana thread'de önbelleğe al.
-    private boolean inRange(Player a, Player b) {
+    private static boolean inRange(Player a, Player b, double radius) {
         return a.getWorld().equals(b.getWorld())
-                && a.getLocation().distanceSquared(b.getLocation()) <= localRadiusSquared;
+                && a.getLocation().distanceSquared(b.getLocation()) <= radius * radius;
     }
 }
