@@ -84,6 +84,13 @@ class ChatFilterTest {
     }
 
     @Test
+    void linkCheckIncludesWhitelistedDomains() {
+        assertTrue(filter.containsLink("videom youtube.com'da"));
+        assertTrue(filter.containsLink("1.2.3.4"));
+        assertFalse(filter.containsLink("sürüm 1.21.11 çıktı"));
+    }
+
+    @Test
     void allowsNormalTextAndWhitelistedDomains() {
         assertFalse(filter.containsAdvertisement("videom youtube.com'da"));
         assertFalse(filter.containsAdvertisement("sürüm 1.21.11 çıktı"));

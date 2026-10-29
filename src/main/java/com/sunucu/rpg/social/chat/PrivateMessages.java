@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 public final class PrivateMessages {
 
     public static final String SPY = "rpg.social.chat.spy";
+    private static final String STAFF = "rpg.social.chat.staff";
 
     private final Messages messages;
     private final ChatFilter filter;
@@ -23,6 +24,7 @@ public final class PrivateMessages {
     private final AfkTracker afk;
     private final ChatMutes mutes;
     private volatile ChatLog chatLog = ChatLog.NONE;
+    private volatile NewPlayerRule newPlayers = NewPlayerRule.NONE;
     // shortcut: spy listesi bellekte, yeniden başlatınca kapanır (güvenli varsayılan).
     private final Set<UUID> spies = ConcurrentHashMap.newKeySet();
     private final SocialStore store;
@@ -84,6 +86,11 @@ public final class PrivateMessages {
             from.sendMessage(messages.get("msg-ignored"));
             return;
         }
+        // Yeni oyuncu yetkililere yazabilir: yardım isteyebilsin.
+        if (newPlayers.applies(from) && !to.hasPermission(STAFF)) {
+            from.sendMessage(messages.get("new-player-pm", newPlayers.minutes()));
+            return;
+        }
         ChatFilter.Verdict verdict = filter.checkContent(text);
         if (!from.hasPermission(ChatListener.BYPASS) && verdict != ChatFilter.Verdict.OK) {
             from.sendMessage(messages.get(ChatListener.messageKey(verdict)));
@@ -91,6 +98,12 @@ public final class PrivateMessages {
         }
         from.sendMessage(messages.get("msg-to",
                 Placeholder.unparsed("name", to.getName()), Placeholder.unparsed("message", text)));
+        // Gizli susturulan gönderdiğini sanır; mesaj karşıya gitmez, kayda ve spy'a gider.
+        if (mutes.isShadowMuted(from.getUniqueId(), System.currentTimeMillis())) {
+            spy(from, to, text);
+            chatLog.record(from, "msg>" + to.getName() + " (gizli)", text);
+            return;
+        }
         to.sendMessage(messages.get("msg-from",
                 Placeholder.unparsed("name", from.getName()), Placeholder.unparsed("message", text)));
         notifications.play(to, Notifications.Type.PRIVATE_MESSAGE);
@@ -101,6 +114,10 @@ public final class PrivateMessages {
         lastPartner.put(to.getUniqueId(), from.getUniqueId());
         spy(from, to, text);
         chatLog.record(from, "msg>" + to.getName(), text);
+    }
+
+    public void setNewPlayerRule(NewPlayerRule rule) {
+        this.newPlayers = rule;
     }
 
     /** Moderasyon bağlar: özel mesajlar da kaydedilir (taciz şikayetleri için). */

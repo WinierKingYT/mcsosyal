@@ -132,6 +132,7 @@ public final class ChatCommands {
 
             // Diğer kanallar /sosyal'dan seçilir; yetkililer kanal değiştirmeden hızlıca yazabilsin.
             registerChannel(commands, chat, "sc", "staff", "Yetkili kanalına yaz");
+            registerChannel(commands, chat, "p", "party", "Parti sohbetine yaz");
         });
     }
 

@@ -88,4 +88,12 @@ class SqliteSocialStoreTest {
             assertEquals(0, data.mutedUntil());
         }
     }
+
+    @Test
+    void shadowMuteSurvivesReload(@TempDir Path dir) throws Exception {
+        try (Database database = Database.open(dir.resolve("data.db"), Logger.getAnonymousLogger())) {
+            SqliteSocialStore.create(database, LOG).saveSetting(player, SocialStore.SHADOW_MUTED_UNTIL, "12345");
+            assertEquals(12345, SqliteSocialStore.create(database, LOG).load(player).shadowMutedUntil());
+        }
+    }
 }

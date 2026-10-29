@@ -1,5 +1,7 @@
 package com.sunucu.rpg.core.gui;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -35,6 +37,13 @@ public final class Icons {
     public static ItemStack head(OfflinePlayer owner, Component name, List<Component> lore) {
         ItemStack item = icon(Material.PLAYER_HEAD, name, lore);
         item.editMeta(SkullMeta.class, meta -> meta.setOwningPlayer(owner));
+        return item;
+    }
+
+    /** Aletlerde "Ana eldeyken: 5 saldırı hasarı" gibi satırları gizler; ikon olarak kullanılan alet için. */
+    public static ItemStack hideAttributes(ItemStack item) {
+        item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
+                .addHiddenComponents(DataComponentTypes.ATTRIBUTE_MODIFIERS).build());
         return item;
     }
 

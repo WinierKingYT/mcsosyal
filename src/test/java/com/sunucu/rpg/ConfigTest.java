@@ -31,7 +31,11 @@ class ConfigTest {
             "messages\\.(?:get|lines|plain)\\(\"([a-z-]+)\"(?=[,)])|\\? \"([a-z-]+)\" : \"([a-z-]+)\"|-> \"([a-z-]+)\";");
     // Kodda birleştirilerek kurulan anahtarlar: regex göremez, elle kontrol edilir.
     private static final List<String> COMPOSED_KEYS = List.of(
-            "mod-type-ban", "mod-type-mute", "mod-type-kick", "mod-type-warn",
+            "mod-type-ban", "mod-type-mute", "mod-type-shadow_mute", "mod-type-kick", "mod-type-warn",
+            "profile-mastery-mining", "profile-mastery-excavation", "profile-mastery-farming",
+            "profile-mastery-woodcutting",
+            "party-color-aqua", "party-color-dark_aqua", "party-color-green", "party-color-yellow",
+            "party-color-gold", "party-color-red", "party-color-light_purple", "party-color-white",
             "mod-status-active", "mod-status-expired", "mod-status-revoked", "mod-status-done");
 
     private static YamlConfiguration load() throws IOException, InvalidConfigurationException {
@@ -50,6 +54,16 @@ class ConfigTest {
         assertNotNull(config.getConfigurationSection("chat.channels.global"), "global kanal yok");
         assertNotNull(config.getConfigurationSection("chat.channels.local"), "yerel kanal yok");
         assertNotNull(config.getConfigurationSection("messages"), "messages bölümü yok");
+    }
+
+    @Test
+    void pluginDescriptorParses() throws Exception {
+        YamlConfiguration descriptor = new YamlConfiguration();
+        try (Reader reader = new InputStreamReader(
+                ConfigTest.class.getResourceAsStream("/paper-plugin.yml"), StandardCharsets.UTF_8)) {
+            descriptor.load(reader);
+        }
+        assertNotNull(descriptor.getConfigurationSection("permissions"), "paper-plugin.yml izinleri okunamadı");
     }
 
     @Test

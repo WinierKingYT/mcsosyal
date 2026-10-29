@@ -6,8 +6,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Süreli sohbet susturması (şimdilik sadece spam yüzünden otomatik). Susturulan oyuncu sohbete ve özel mesaja
- * yazamaz; çıkıp girmek ya da sunucu yeniden başlamak susturmayı kaldırmaz (SocialStore).
+ * Sohbet susturması. Susturulan oyuncu sohbete ve özel mesaja yazamaz. Gizli susturulan yazabilir ama mesajını
+ * sadece kendisi (ve yetkililer) görür. Çıkıp girmek ya da sunucu yeniden başlamak susturmayı kaldırmaz (SocialStore).
  * Bukkit'e bağımlı değil, test edilebilir; async sohbetten de okunur.
  */
 public final class ChatMutes {
@@ -17,6 +17,7 @@ public final class ChatMutes {
 
     private final SocialStore store;
     private final Map<UUID, Long> mutedUntil = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> shadowUntil = new ConcurrentHashMap<>();
 
     public ChatMutes(SocialStore store) {
         this.store = store;
@@ -27,20 +28,45 @@ public final class ChatMutes {
         store.saveMute(player, untilMillis);
     }
 
-    /** @return true ise susturulmuştu. */
-    public boolean unmute(UUID player) {
-        store.saveMute(player, 0);
-        return mutedUntil.remove(player) != null;
+    public void shadowMute(UUID player, long untilMillis) {
+        shadowUntil.put(player, untilMillis);
+        store.saveSetting(player, SocialStore.SHADOW_MUTED_UNTIL, String.valueOf(untilMillis));
     }
 
-    public void load(UUID player, long untilMillis) {
+    /** Normal ve gizli susturmanın ikisini de kaldırır. @return true ise susturulmuştu. */
+    public boolean unmute(UUID player) {
+        store.saveMute(player, 0);
+        store.saveSetting(player, SocialStore.SHADOW_MUTED_UNTIL, null);
+        boolean muted = mutedUntil.remove(player) != null;
+        return shadowUntil.remove(player) != null || muted;
+    }
+
+    public void load(UUID player, long untilMillis, long shadowUntilMillis) {
         if (untilMillis > 0) {
             mutedUntil.put(player, untilMillis);
+        }
+        if (shadowUntilMillis > 0) {
+            shadowUntil.put(player, shadowUntilMillis);
         }
     }
 
     public void unload(UUID player) {
         mutedUntil.remove(player);
+        shadowUntil.remove(player);
+    }
+
+    public boolean isShadowMuted(UUID player, long now) {
+        Long until = shadowUntil.get(player);
+        if (until == null) {
+            return false;
+        }
+        if (until <= now) {
+            if (shadowUntil.remove(player, until)) {
+                store.saveSetting(player, SocialStore.SHADOW_MUTED_UNTIL, null);
+            }
+            return false;
+        }
+        return true;
     }
 
     /** Kalan süre; susturulmamışsa ya da süresi dolduysa 0. */

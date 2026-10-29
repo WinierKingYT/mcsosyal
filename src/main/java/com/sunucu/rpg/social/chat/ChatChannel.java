@@ -20,13 +20,13 @@ public record ChatChannel(String key, Component name, Component tag, Material ic
     public static final String LOCAL = "local";
 
     public static ChatChannel fromConfig(String key, ConfigurationSection section) {
-        String permission = section.getString("permission", "");
-        Material icon = Material.matchMaterial(section.getString("icon", "PAPER"));
-        String description = section.getString("description", "");
+        String permission = string(section, "permission", "");
+        Material icon = Material.matchMaterial(string(section, "icon", "PAPER"));
+        String description = string(section, "description", "");
         return new ChatChannel(
                 key,
-                Messages.parse(section.getString("name", key)),
-                Messages.parse(section.getString("tag", key)),
+                Messages.parse(string(section, "name", key)),
+                Messages.parse(string(section, "tag", key)),
                 icon == null ? Material.PAPER : icon,
                 description.isBlank() ? List.of()
                         : Arrays.stream(description.split("\n")).map(Messages::parse).toList(),
@@ -39,5 +39,11 @@ public record ChatChannel(String key, Component name, Component tag, Material ic
     static ChatChannel fallback(String key, double radius) {
         return new ChatChannel(key, Component.text(key), Component.text(key), Material.PAPER, List.of(), 2000, null,
                 radius);
+    }
+
+    /** getString(path, def) varsayılana bakmaz; güncellemeden sonraki ilk açılışta yeni kanalın izni boş kalırdı. */
+    private static String string(ConfigurationSection section, String path, String fallback) {
+        String value = section.getString(path);
+        return value == null ? fallback : value;
     }
 }

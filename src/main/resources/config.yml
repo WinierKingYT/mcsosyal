@@ -54,6 +54,12 @@ chat:
       tag: "<red>Yetkili</red>"
       cooldown-millis: 0
       permission: rpg.social.chat.staff
+    party:
+      name: "<light_purple>Parti</light_purple>"
+      icon: CAKE
+      description: "<gray>Sadece parti üyelerin görür.\n<gray>Kısayol: <white>/p mesaj</white>"
+      tag: "<light_purple>Parti</light_purple>"
+      cooldown-millis: 1000
   # Sohbette ismin üstüne gelince çıkan oyuncu kartı. Her satır bir değere bağlı (stat); değerleri RPG sistemi
   # verir, değer yoksa satır gösterilmez. Sırayı ve hangi bilgilerin görüneceğini buradan seç.
   player-card:
@@ -173,6 +179,8 @@ messages:
   menu-notifications: "<yellow>Bildirimler</yellow>"
   menu-notifications-lore: "<gray>Etiket ve özel mesaj\n<gray>bildirimlerini aç ya da kapat."
   channels-title: "Sohbet Kanalları"
+  menu-party: "<light_purple>Parti</light_purple>"
+  menu-party-lore: "<gray>Partini gör, üyeleri yönet,\n<gray>davetleri kabul et."
   menu-friends: "<green>Arkadaşlar</green>"
   menu-friends-lore: "<gray>Arkadaşlarını gör, mesaj at,\n<gray>istekleri kabul et."
   # Arkadaş listesi. <name> oyuncu adı, <count>/<max> sayı ve sınır.
@@ -209,7 +217,35 @@ messages:
   profile-title: "<name> - Profil"
   profile-head: "<yellow><name></yellow>"
   profile-own: "<dark_gray>Bu senin profilin."
-  profile-playtime: "<gold>Oynama Süresi</gold>"
+  profile-playtime: "<gold>Oynama Süresi ve İstatistikler</gold>"
+  profile-stats: "<gray>Ölüm: <white><deaths></white>
+<gray>Canavar öldürme: <white><mobs></white>
+<gray>Oyuncu öldürme: <white><players></white>
+<gray>Yürünen yol: <white><km> km</white>"
+  profile-helmet: "<red>Kask</red>"
+  profile-chestplate: "<red>Göğüslük</red>"
+  profile-leggings: "<red>Pantolon</red>"
+  profile-boots: "<red>Ayakkabı</red>"
+  profile-main-hand: "<gold>Birinci El</gold>"
+  profile-off-hand: "<yellow>İkinci El</yellow>"
+  profile-slot-empty: "<gray>Boş."
+  profile-slot-offline: "<gray>Oyuncu çevrimdışı, görünmüyor."
+  profile-pet: "<aqua>Pet</aqua>"
+  profile-pet-none: "<gray>Takılı pet yok."
+  profile-pet-click: "<dark_gray>Tıkla: pet menüsü"
+  profile-mount: "<aqua>Binek</aqua>"
+  profile-mount-none: "<gray>Takılı binek yok."
+  profile-mount-click: "<dark_gray>Tıkla: binek menüsü"
+  profile-settings: "<yellow>Ayarlar</yellow>"
+  profile-settings-lore: "<gray>Tıkla: sohbet kanalları, arkadaşlar\n<gray>ve bildirim ayarları."
+  profile-soon: "<dark_gray>Yakında."
+  profile-mastery-mining: "<aqua>Madencilik</aqua>"
+  profile-mastery-excavation: "<aqua>Kazı</aqua>"
+  profile-mastery-farming: "<aqua>Çiftçilik</aqua>"
+  profile-mastery-woodcutting: "<aqua>Odunculuk</aqua>"
+  profile-mastery-lore: "<gray>Seviye: <white><level></white>
+<green><bar></green> <white><percent>%</white>"
+  profile-mastery-click: "<dark_gray>Tıkla: ustalık paneli"
   profile-playtime-total: "<gray>Toplam: <white><time></white>"
   profile-first-joined: "<gray>İlk giriş: <white><date></white>"
   profile-online-now: "<green>● Şu an çevrimiçi</green>"
@@ -236,6 +272,31 @@ messages:
   mod-permanent: "<dark_red>kalıcı</dark_red>"
   mod-auto-issuer: "Otomatik"
   mod-auto-spam-reason: "Spam"
+  mod-auto-warn-reason: "<count> uyarı"
+  mod-notice-shadowmute: "<dark_gray>[Mod]</dark_gray> <gray><issuer>, <white><target></white><gray> oyuncusunu gizlice susturdu (<time><gray>): <reason>"
+  shadow-tag: "<dark_gray>[Gizli]</dark_gray> "
+  delete-button: " <dark_gray>[<red>x</red>]</dark_gray>"
+  delete-hover: "<red>Mesajı herkesin sohbetinden sil"
+  message-deleted: "<gray><name> oyuncusunun mesajı silindi.</gray>"
+  new-player-link: "<red>Yeni oyuncular ilk <minutes> dakika bağlantı paylaşamaz.</red>"
+  new-player-pm: "<red>Yeni oyuncular ilk <minutes> dakika sadece yetkililere özel mesaj atabilir. Yardım için sohbete yaz.</red>"
+  profile-staff-history: "<gold>Ceza geçmişi</gold>"
+  profile-staff-history-lore: "<gray>Tıkla: cezalarını gör"
+  profile-staff-chatlog: "<aqua>Sohbet kaydı</aqua>"
+  profile-staff-chatlog-lore: "<gray>Tıkla: son mesajlarını gör"
+  profile-staff-inventory: "<yellow>Envanter</yellow>"
+  profile-staff-inventory-lore: "<gray>Tıkla: envanterini aç ve düzenle"
+  profile-staff-punish: "<red>Ceza ver</red>"
+  profile-staff-punish-lore: "<gray>Tıkla: sohbete ceza komutları gelir,
+<gray>sebebi sen yazarsın."
+  punish-prompt: "<gray><name> için ceza:"
+  punish-warn: "<yellow>[Uyar]</yellow>"
+  punish-mute: "<red>[Sustur]</red>"
+  punish-shadowmute: "<gray>[Gizli sustur]</gray>"
+  punish-kick: "<gold>[At]</gold>"
+  punish-ban: "<dark_red>[Banla]</dark_red>"
+  punish-hover: "<gray>Komut yazılır: <white><command></white>
+<gray>Süreyi ve sebebi düzenleyip gönder."
   muted-permanent: "<red>Kalıcı olarak susturuldun.</red>"
   mod-muted-target: "<red>Susturuldun (<time><red>): <white><reason></white></red>"
   mod-warned-target: "<gold>⚠ Uyarı aldın: <white><reason></white></gold>"
@@ -258,6 +319,7 @@ messages:
   mod-history-line: "<dark_gray>#<id></dark_gray> <type> <gray><time></gray> <white><reason></white> <dark_gray>— <issuer>, <date></dark_gray> <status>"
   mod-type-ban: "<dark_red>BAN</dark_red>"
   mod-type-mute: "<red>MUTE</red>"
+  mod-type-shadow_mute: "<gray>GİZLİ MUTE</gray>"
   mod-type-kick: "<gold>KICK</gold>"
   mod-type-warn: "<yellow>UYARI</yellow>"
   mod-status-active: "<red>[aktif]</red>"
@@ -267,6 +329,152 @@ messages:
   mod-chatlog-header: "<gold><name> son mesajları (<count>):</gold>"
   mod-chatlog-empty: "<gray><name> için sohbet kaydı yok.</gray>"
   mod-chatlog-line: "<dark_gray><date></dark_gray> <gray>[<channel>]</gray> <white><message>"
+  # Yetkili pencereleri (/geçmiş, /chatlog). <text> kayıttaki metin (düz metin), diğerleri yukarıdakiyle aynı.
+  mod-gui-history-title: "<name> — Ceza geçmişi"
+  mod-gui-chatlog-title: "<name> — Sohbet kaydı"
+  mod-gui-head: "<gold><name></gold>"
+  mod-gui-head-lore: "<gray>Gösterilen kayıt: <white><count></white>
+<dark_gray>En yeni en başta."
+  mod-gui-to-chatlog: "<aqua>Sohbet kaydı</aqua>"
+  mod-gui-to-chatlog-lore: "<gray>Tıkla: bu oyuncunun son mesajları"
+  mod-gui-to-history: "<gold>Ceza geçmişi</gold>"
+  mod-gui-to-history-lore: "<gray>Tıkla: bu oyuncunun cezaları"
+  mod-gui-entry: "<type> <dark_gray>#<id>"
+  mod-gui-entry-lore: "<gray>Durum: <status>
+<gray>Süre: <white><time></white>
+<gray>Yetkili: <white><issuer></white>
+<gray>Tarih: <white><date></white>"
+  mod-gui-no-time: "<dark_gray>—</dark_gray>"
+  mod-gui-reason: "<gray>Sebep:"
+  mod-gui-revoked: "<green>Kaldıran: <white><issuer></white>, <date></green>"
+  mod-gui-message: "<white><text>"
+  mod-gui-message-lore: "<gray>Tarih: <white><date></white>
+<gray>Kanal: <white><channel></white>
+<gray>Mesaj:"
+  mod-gui-text-line: "<white><text>"
+  # Parti. <name> oyuncu, <count>/<max> kişi sayısı ve sınır.
+  party-name: "<name> Partisi"
+  party-title: "<party> (<count>/<max>)"
+  party-display: "<pcolor><tag><party></pcolor>"
+  party-tag: "[<tag>] "
+  party-description-line: "<gray><i>\"<text>\""
+  party-text-blocked: "<red>Bu metin kullanılamaz (küfür ya da reklam).</red>"
+  party-tag-set: "<light_purple>[Parti]</light_purple> <gray>Yeni etiket: <party>"
+  party-tag-cleared: "<light_purple>[Parti]</light_purple> <gray>Etiket kaldırıldı."
+  party-tag-invalid: "<red>Etiket 2-5 harf ya da rakam olmalı, boşluksuz.</red>"
+  party-tag-taken: "<red>Bu etiketi başka bir parti kullanıyor.</red>"
+  party-description-set: "<light_purple>[Parti]</light_purple> <gray>Yeni açıklama: <white><text>"
+  party-description-cleared: "<light_purple>[Parti]</light_purple> <gray>Açıklama kaldırıldı."
+  party-description-invalid: "<red>Açıklama en fazla <max> karakter olabilir.</red>"
+  party-color-set: "<light_purple>[Parti]</light_purple> <gray>Parti rengi: <color>"
+  party-color: "<yellow>Parti Rengi</yellow>"
+  party-color-lore: "<gray>Şu an: <color>\n<gray>Üyeler birbirinin sohbet\n<gray>mesajını bu renkte görür."
+  party-color-click: "<gray>Sol tık: sonraki, sağ tık: önceki"
+  party-color-aqua: "<aqua>Açık Mavi</aqua>"
+  party-color-dark_aqua: "<dark_aqua>Turkuaz</dark_aqua>"
+  party-color-green: "<green>Yeşil</green>"
+  party-color-yellow: "<yellow>Sarı</yellow>"
+  party-color-gold: "<gold>Turuncu</gold>"
+  party-color-red: "<red>Kırmızı</red>"
+  party-color-light_purple: "<light_purple>Pembe</light_purple>"
+  party-color-white: "<white>Beyaz</white>"
+  party-tag-button: "<yellow>Etiket</yellow>"
+  party-tag-button-lore: "<gray>Listede adın önünde görünür,\n<gray>ör. <white>[EJDER]</white>. 2-5 harf."
+  party-description-button: "<yellow>Açıklama</yellow>"
+  party-description-button-lore: "<gray>Listede partinin altında görünür."
+  party-text-none: "<dark_gray>Ayarlanmadı."
+  party-text-current: "<gray>Şu an: <white><text>"
+  party-text-click: "<gray>Tıkla: sohbete komut gelir"
+  party-tag-prompt: "<gray>Etiketi yaz: <white>/parti etiket ETİKET</white> <dark_gray>(tıkla)</dark_gray>"
+  party-description-prompt: "<gray>Açıklamayı yaz: <white>/parti açıklama metin</white> <dark_gray>(tıkla)</dark_gray>"
+  party-title-none: "Parti"
+  party-created: "<light_purple>[Parti]</light_purple> <gray>Partin kuruldu. Davet: <white>/parti davet isim</white></gray>"
+  party-create: "<green>Parti Kur</green>"
+  party-create-lore: "<gray>Tıkla: kendi partini kur,\n<gray>lideri sen ol."
+  party-list: "<aqua>Mevcut Partiler (<count>)</aqua>"
+  party-list-lore: "<gray>Açık partileri gör ve katıl."
+  party-list-title: "Mevcut Partiler"
+  party-list-entry-lore: "<gray>Lider: <white><leader></white>\n<gray>Üyeler: <white><count>/<max></white>"
+  party-list-join: "<green>Tıkla: katıl"
+  party-list-empty: "<gray>Açık parti yok"
+  party-list-empty-lore: "<gray>Sen kur: <white>/parti kur</white>"
+  party-invites: "<gold>Davetler (<count>)</gold>"
+  party-invites-lore: "<gray>Sana gelen parti davetleri."
+  party-invites-title: "Parti Davetleri"
+  party-gone: "<red>Bu parti artık yok.</red>"
+  party-closed: "<red>Bu parti gizli, sadece davetle girilir.</red>"
+  party-settings: "<yellow>Parti Ayarları</yellow>"
+  party-settings-lore: "<gray>Tıkla: açık/gizli, davet ve\n<gray>dost ateşi ayarları."
+  party-settings-view-lore: "<gray>Tıkla: ayarları gör.\n<dark_gray>Sadece lider değiştirir."
+  party-settings-title: "Parti Ayarları"
+  party-setting-open: "<aqua>Herkese Açık</aqua>"
+  party-setting-open-lore: "<gray>Açık: listede görünür, herkes katılır.\n<gray>Kapalı: gizli, sadece davetle."
+  party-setting-members-invite: "<aqua>Üyeler Davet Edebilir</aqua>"
+  party-setting-members-invite-lore: "<gray>Açık: her üye davet eder.\n<gray>Kapalı: sadece lider."
+  party-setting-friendly-fire: "<aqua>Dost Ateşi</aqua>"
+  party-setting-friendly-fire-lore: "<gray>Açık: üyeler birbirine vurabilir.\n<gray>Kapalı: parti içi hasar yok."
+  party-setting-on: "<green>● Açık</green>"
+  party-setting-off: "<red>● Kapalı</red>"
+  party-setting-click: "<gray>Tıkla: değiştir"
+  party-setting-leader-only: "<dark_gray>Sadece lider değiştirir."
+  party-size: "<yellow>Parti Boyutu</yellow>"
+  party-size-lore: "<gray>Şu an: <white><size> kişi</white>\n<gray>Senin sınırın: <white><limit></white>"
+  party-size-click: "<gray>Sol tık: +1, sağ tık: -1"
+  party-size-set: "<light_purple>[Parti]</light_purple> <gray>Parti boyutu: <white><size> kişi</white>"
+  party-size-invalid: "<red>Parti en az <min> kişilik olabilir (şu anki üye sayısının altına inemez).</red>"
+  party-size-limit: "<red>En fazla <max> kişilik parti kurabilirsin. Daha büyüğü için VIP.</red>"
+  party-admin-title: "Tüm Partiler (Admin)"
+  party-admin-click: "<gold>Tıkla: ayarlarını düzenle"
+  party-admin-clear: "<red>Etiketi ve Açıklamayı Temizle</red>"
+  party-admin-clear-lore: "<gray>Uygunsuz etiket ya da açıklama için."
+  party-admin-cleared: "<gray>Partinin etiketi ve açıklaması temizlendi.</gray>"
+  party-setting-changed: "<light_purple>[Parti]</light_purple> <setting><gray>: <value>"
+  party-invite-sent: "<gray><name> partiye davet edildi.</gray>"
+  party-invite-received: "<light_purple><name></light_purple> <gray>seni <white><party></white> partisine davet etti.</gray>"
+  party-accept-button: "<green>[Katıl]</green>"
+  party-deny-button: "<red>[Reddet]</red>"
+  party-invite-denied: "<gray><name> parti davetini reddetti.</gray>"
+  party-denied: "<gray><name> oyuncusunun davetini reddettin.</gray>"
+  party-self: "<red>Kendine bunu yapamazsın.</red>"
+  party-target-in-party: "<red><name> zaten bir partide.</red>"
+  party-not-leader: "<red>Bunu sadece parti lideri yapabilir.</red>"
+  party-already-invited: "<gray><name> zaten davet edildi, cevap bekleniyor.</gray>"
+  party-full: "<red>Parti dolu.</red>"
+  party-no-invite: "<red><name> oyuncusundan geçerli bir davet yok.</red>"
+  party-already-in-party: "<red>Zaten bir partidesin. Önce <white>/parti ayrıl</white>.</red>"
+  party-joined: "<light_purple>[Parti]</light_purple> <white><name></white> <gray>partiye katıldı.</gray>"
+  party-left: "<light_purple>[Parti]</light_purple> <white><name></white> <gray>partiden ayrıldı.</gray>"
+  party-kicked: "<light_purple>[Parti]</light_purple> <white><name></white> <gray>partiden atıldı.</gray>"
+  party-you-left: "<gray>Partiden ayrıldın.</gray>"
+  party-you-kicked: "<red><name> seni partiden attı.</red>"
+  party-disbanded: "<light_purple>[Parti]</light_purple> <gray>Parti dağıldı.</gray>"
+  party-new-leader: "<light_purple>[Parti]</light_purple> <gray>Yeni lider: <gold><name></gold></gray>"
+  party-member-online: "<light_purple>[Parti]</light_purple> <white><name></white> <green>oyuna girdi.</green>"
+  party-member-offline: "<light_purple>[Parti]</light_purple> <white><name></white> <gray>oyundan çıktı.</gray>"
+  party-not-member: "<red><name> partinde değil.</red>"
+  party-none: "<red>Bir partide değilsin. Kurmak için: <white>/parti kur</white></red>"
+  party-unknown: "<red><name> bulunamadı.</red>"
+  party-leader-tag: "<gold>♛ Lider</gold>"
+  party-member-leader-lore: "<gray>Sağ tık: <gold>lider yap</gold></gray>\n<gray>Shift + sağ tık: <red>partiden at</red></gray>"
+  party-leave: "<red>Partiden Ayrıl</red>"
+  party-disband: "<red>Partiyi Kapat</red>"
+  party-disband-lore: "<gray>Herkes partiden çıkar.\n<gray>Shift + sol tık: <red>kapat</red>"
+  party-disband-confirm: "<gray>Partiyi kapatmak için <white>Shift + sol tık</white> yap."
+  party-info: "<gold>Parti Bilgileri</gold>"
+  party-info-lore: "<gray>Lider: <white><leader></white>\n<gray>Üyeler: <white><count>/<max></white>\n<gray>Görünürlük: <visibility>\n<gray>Dost ateşi: <friendly>\n<gray>Renk: <color>"
+  party-info-open: "<green>Herkese açık</green>"
+  party-info-hidden: "<red>Gizli</red>"
+  party-free-slot: "<green>Boş Yer</green>"
+  party-free-slot-lore: "<gray>Tıkla: oyuncu davet et."
+  party-invite-picker-title: "Davet Et"
+  party-invite-picker-lore: "<gray>Tıkla: partiye davet et."
+  party-invite-picker-empty: "<gray>Davet edilebilecek çevrimiçi oyuncu yok"
+  party-leave-lore: "<gray>Tıkla: partiden ayrıl."
+  party-invite-head: "<light_purple><name></light_purple> <gray>seni davet etti"
+  party-invite-lore: "<gray>Sol tık: <green>katıl</green></gray>\n<gray>Sağ tık: <red>reddet</red></gray>"
+  profile-party: "<light_purple>Parti</light_purple>"
+  profile-party-invite: "<gray>Tıkla: <white>partiye davet et</white></gray>"
+  profile-party-together: "<light_purple>Aynı partidesiniz.</light_purple>"
   report-sent: "<green><name> yetkililere şikayet edildi. Teşekkürler.</green>"
   report-self: "<red>Kendini şikayet edemezsin.</red>"
   report-cooldown: "<red>Tekrar şikayet etmek için <seconds> saniye bekle.</red>"
@@ -313,10 +521,41 @@ announcements:
     - "Bir oyuncunun profilini görmek için sohbette ismine tıkla."
     - "Sadece yakındakilere yazmak için mesajının başına <white>!</white> koy."
 
+# Parti: geçici (sunucu yeniden başlayınca dağılır). Davet invite-seconds saniye geçerli.
+# default-size: yeni partinin boyutu. size-limit: liderin ayarlardan büyütebileceği en fazla (2-10).
+# VIP: rpg.party.size.<n> izni (ör. rpg.party.size.10) n kişiye kadar büyütür. Admin (rpg.party.admin) her partiyi
+# düzenler ve 10'a kadar çıkarır.
+# defaults: yeni kurulan partinin ayarları (lider /parti ayarlar'dan değiştirir).
+#   open: listede görünür, herkes katılır. members-invite: üyeler de davet eder. friendly-fire: üyeler birbirine vurur.
+party:
+  default-size: 5
+  size-limit: 5
+  invite-seconds: 60
+  defaults:
+    open: true
+    members-invite: false
+    friendly-fire: false
+    # Parti rengi: üyeler birbirinin sohbet mesajını bu renkte görür. aqua, dark_aqua, green, yellow, gold, red,
+    # light_purple, white.
+    color: aqua
+
 # Moderasyon. Sohbet ve özel mesaj kayıtları chat-log-days günden eskiyse açılışta silinir.
 moderation:
   chat-log-days: 30
   report-cooldown-seconds: 60
+  # Uyarı birikince otomatik ceza: son warn-window-days gün içindeki uyarı sayısı tam "warnings" olunca çalışır.
+  # action: mute, ban ya da kick. duration yoksa kalıcı (kick'te süre yok). Kapatmak için: warn-escalation: []
+  warn-window-days: 30
+  warn-escalation:
+    - warnings: 3
+      action: mute
+      duration: 1h
+    - warnings: 5
+      action: ban
+      duration: 1d
+  # Yeni oyuncu: oynama süresi bu kadar dakikadan azsa bağlantı paylaşamaz, yetkili olmayanlara özel mesaj atamaz.
+  # Reklam botlarına karşı. 0: kapalı.
+  new-player-minutes: 10
 
 # İsimli bölgeler: [konum] paylaşımında koordinatla birlikte bölge adı görünür.
 # from/to iki köşenin [x, z] koordinatı, yükseklik fark etmez. İç içe bölgelerde küçük olanı üste yaz.

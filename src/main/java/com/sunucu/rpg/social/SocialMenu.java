@@ -10,6 +10,9 @@ import com.sunucu.rpg.social.chat.Notifications;
 import com.sunucu.rpg.social.friends.FriendActions;
 import com.sunucu.rpg.social.friends.Friends;
 import com.sunucu.rpg.social.friends.FriendsMenu;
+import com.sunucu.rpg.social.party.Parties;
+import com.sunucu.rpg.social.party.PartyActions;
+import com.sunucu.rpg.social.party.PartyMenu;
 import com.sunucu.rpg.social.profile.ProfileMenu;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +30,10 @@ import org.bukkit.inventory.ItemStack;
 public final class SocialMenu {
 
     private static final int ROWS = 3;
-    private static final int MAIN_CHANNELS_SLOT = 11;
-    private static final int MAIN_FRIENDS_SLOT = 13;
-    private static final int MAIN_NOTIFICATIONS_SLOT = 15;
+    private static final int MAIN_CHANNELS_SLOT = 10;
+    private static final int MAIN_FRIENDS_SLOT = 12;
+    private static final int MAIN_PARTY_SLOT = 14;
+    private static final int MAIN_NOTIFICATIONS_SLOT = 16;
     private static final int FIRST_CHANNEL_SLOT = 10;
     private static final int MAX_CHANNELS = 7;
     private static final int MENTION_SLOT = 10;
@@ -43,18 +47,25 @@ public final class SocialMenu {
     private final ChannelPreferences preferences;
     private final Notifications notifications;
     private final FriendsMenu friendsMenu;
+    private final PartyMenu partyMenu;
 
     public SocialMenu(Messages messages, ChatListener chat, ChannelPreferences preferences, Notifications notifications,
-                      Friends friends, FriendActions friendActions, ProfileMenu profile) {
+                      Friends friends, FriendActions friendActions, Parties parties, PartyActions partyActions,
+                      ProfileMenu profile) {
         this.messages = messages;
         this.chat = chat;
         this.preferences = preferences;
         this.notifications = notifications;
         this.friendsMenu = new FriendsMenu(friends, friendActions, messages, this::openMain, profile::open);
+        this.partyMenu = new PartyMenu(parties, partyActions, messages, this::openMain, profile::open);
     }
 
     public FriendsMenu friendsMenu() {
         return friendsMenu;
+    }
+
+    public PartyMenu partyMenu() {
+        return partyMenu;
     }
 
     public void openMain(Player player) {
@@ -63,6 +74,8 @@ public final class SocialMenu {
                         messages.lines("menu-channels-lore")), click -> openChannels(player))
                 .button(MAIN_FRIENDS_SLOT, Icons.icon(Material.PLAYER_HEAD, messages.get("menu-friends"),
                         messages.lines("menu-friends-lore")), click -> friendsMenu.open(player))
+                .button(MAIN_PARTY_SLOT, Icons.icon(Material.CAKE, messages.get("menu-party"),
+                        messages.lines("menu-party-lore")), click -> partyMenu.open(player))
                 .button(MAIN_NOTIFICATIONS_SLOT, Icons.icon(Material.BELL, messages.get("menu-notifications"),
                         messages.lines("menu-notifications-lore")), click -> openNotifications(player))
                 .open(player);

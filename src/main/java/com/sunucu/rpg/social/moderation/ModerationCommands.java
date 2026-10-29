@@ -38,8 +38,8 @@ public final class ModerationCommands {
     public static final String HISTORY = "rpg.moderation.history";
     public static final String CHATLOG = "rpg.moderation.chatlog";
 
-    private static final int DEFAULT_CHATLOG_LINES = 15;
-    private static final int MAX_CHATLOG_LINES = 50;
+    private static final int DEFAULT_CHATLOG_LINES = ModerationMenu.PAGE_SIZE;
+    private static final int MAX_CHATLOG_LINES = ModerationMenu.PAGE_SIZE;
 
     /** Sebep ve süre: ilk kelime süreyse (ör. 7d) süre, gerisi sebep; değilse kalıcı ve hepsi sebep. */
     record Detail(long durationMillis, String reason) {
@@ -63,6 +63,8 @@ public final class ModerationCommands {
             Commands commands = event.registrar();
             commands.register(timed("mute", MUTE, messages, defaultReason, moderation::mute).build(),
                     "Oyuncuyu sustur (süre yoksa kalıcı)");
+            commands.register(timed("gizlisustur", MUTE, messages, defaultReason, moderation::shadowMute).build(),
+                    "Gizlice sustur: mesajlarını sadece kendisi görür (/unmute kaldırır)", List.of("shadowmute"));
             commands.register(timed("ban", BAN, messages, defaultReason, moderation::ban).build(),
                     "Oyuncuyu yasakla (süre yoksa kalıcı)");
             commands.register(target("unmute", MUTE, messages, moderation::unmute).build(), "Susturmayı kaldır");

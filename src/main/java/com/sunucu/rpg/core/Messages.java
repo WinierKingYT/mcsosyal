@@ -32,7 +32,9 @@ public final class Messages {
             return;
         }
         for (String key : section.getKeys(false)) {
-            templates.put(key, section.getString(key, ""));
+            // getString(key, "") varsayılana bakmaz: güncellemeden sonraki ilk açılışta yeni mesajlar boş çıkıyordu.
+            String template = section.getString(key);
+            templates.put(key, template == null ? "" : template);
         }
     }
 

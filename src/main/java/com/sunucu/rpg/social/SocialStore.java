@@ -12,17 +12,18 @@ public interface SocialStore {
     String ACTIVE_CHANNEL = "channel.active";
     String HIDDEN_CHANNELS = "channel.hidden";
     String MUTED_NOTIFICATIONS = "notify.off";
+    String SHADOW_MUTED_UNTIL = "mute.shadow";
 
     /**
-     * activeChannel null ise varsayılan kanal; mutedUntil 0 ise susturulmamış.
+     * activeChannel null ise varsayılan kanal; mutedUntil ve shadowMutedUntil 0 ise susturulmamış.
      * incomingRequests: bu oyuncuya gelen arkadaşlık istekleri, outgoingRequests: onun gönderdikleri.
      */
     record PlayerData(String activeChannel, Set<String> hiddenChannels, Set<String> mutedNotifications,
                       Set<UUID> ignores, long mutedUntil, Set<UUID> friends, Set<UUID> incomingRequests,
-                      Set<UUID> outgoingRequests) {
+                      Set<UUID> outgoingRequests, long shadowMutedUntil) {
 
         public static final PlayerData EMPTY =
-                new PlayerData(null, Set.of(), Set.of(), Set.of(), 0, Set.of(), Set.of(), Set.of());
+                new PlayerData(null, Set.of(), Set.of(), Set.of(), 0, Set.of(), Set.of(), Set.of(), 0);
     }
 
     /** Liste ayarları için: virgülle birleştirir, boşsa null (ayar silinir). */

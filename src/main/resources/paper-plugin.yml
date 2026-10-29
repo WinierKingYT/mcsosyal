@@ -19,7 +19,7 @@ permissions:
     description: Herkese duyuru yapma (/duyuru)
     default: op
   rpg.moderation.mute:
-    description: /mute, /unmute
+    description: /mute, /gizlisustur, /unmute; gizli susturulanın mesajını görme
     default: op
   rpg.moderation.ban:
     description: /ban, /unban
@@ -42,11 +42,32 @@ permissions:
   rpg.moderation.notify:
     description: Verilen cezaların bildirimini görme
     default: op
+  rpg.moderation.delete:
+    description: Sohbette mesajın yanındaki [x] ile tek mesajı herkesten silme
+    default: op
   rpg.moderation.exempt:
     description: Moderasyondan muaf (sadece konsol cezalandırabilir)
     default: op
   rpg.social.inventory.edit:
     description: Sohbette paylaşılan [inv]'e tıklayınca oyuncunun gerçek envanterini açıp düzenleme
+    default: op
+  rpg.role.moderator:
+    description: "Moderatör paketi. LuckPerms ile tek izin ver, moderasyon araçlarının hepsi gelir (ban ve muafiyet hariç). [Mod] rozeti ayrı: rpg.social.badge.mod"
+    default: op
+    children:
+      rpg.moderation.mute: true
+      rpg.moderation.kick: true
+      rpg.moderation.warn: true
+      rpg.moderation.history: true
+      rpg.moderation.chatlog: true
+      rpg.moderation.reports: true
+      rpg.moderation.notify: true
+      rpg.moderation.delete: true
+      rpg.social.inventory.edit: true
+      rpg.social.chat.moderate: true
+      rpg.social.chat.staff: true
+  rpg.party.admin:
+    description: "/parti admin: sunucudaki tüm partileri görme, ayarlarını değiştirme, kapatma"
     default: op
   rpg.social.badge.admin:
     description: Sohbette [Admin] rozeti

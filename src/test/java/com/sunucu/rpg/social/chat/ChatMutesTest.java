@@ -27,4 +27,19 @@ class ChatMutesTest {
         assertTrue(mutes.unmute(player));
         assertEquals(0, mutes.remainingMillis(player, 0));
     }
+
+    @Test
+    void shadowMuteIsSeparateAndExpires() {
+        mutes.shadowMute(player, 1000);
+        assertTrue(mutes.isShadowMuted(player, 400));
+        assertEquals(0, mutes.remainingMillis(player, 400), "gizli susturulan yazabilmeli");
+        assertFalse(mutes.isShadowMuted(player, 1000));
+    }
+
+    @Test
+    void unmuteLiftsShadowMute() {
+        mutes.shadowMute(player, 10_000);
+        assertTrue(mutes.unmute(player));
+        assertFalse(mutes.isShadowMuted(player, 0));
+    }
 }

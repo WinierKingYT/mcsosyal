@@ -107,7 +107,16 @@ public final class SqliteSocialStore implements SocialStore {
                 list(settings.get(MUTED_NOTIFICATIONS)), ignores, mutedUntil,
                 uuids(connection, "SELECT friend FROM social_friends WHERE player = ?", player),
                 uuids(connection, "SELECT sender FROM social_friend_requests WHERE target = ?", player),
-                uuids(connection, "SELECT target FROM social_friend_requests WHERE sender = ?", player));
+                uuids(connection, "SELECT target FROM social_friend_requests WHERE sender = ?", player),
+                number(settings.get(SHADOW_MUTED_UNTIL)));
+    }
+
+    private static long number(String value) {
+        try {
+            return value == null ? 0 : Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private static Set<UUID> uuids(Connection connection, String sql, String player) throws SQLException {

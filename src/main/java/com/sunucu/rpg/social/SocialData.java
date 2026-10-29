@@ -99,7 +99,7 @@ public final class SocialData implements Listener {
         preferences.load(player, data.activeChannel(), data.hiddenChannels());
         notifications.load(player, data.mutedNotifications());
         privateMessages.load(player, data.ignores());
-        mutes.load(player, data.mutedUntil());
+        mutes.load(player, data.mutedUntil(), data.shadowMutedUntil());
         friends.load(player, data.friends(), data.incomingRequests(), data.outgoingRequests());
     }
 

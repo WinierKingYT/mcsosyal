@@ -37,7 +37,6 @@ public final class Moderation implements Listener {
     public static final String NOTIFY = "rpg.moderation.notify";
 
     private static final long LOGIN_CHECK_TIMEOUT_SECONDS = 5;
-    private static final int HISTORY_LIMIT = 10;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
             .withZone(ZoneId.systemDefault());
 
@@ -45,27 +44,51 @@ public final class Moderation implements Listener {
     private final ModerationStore store;
     private final ChatMutes mutes;
     private final Messages messages;
+    private final ModerationMenu menu;
+    private final WarnEscalation escalation;
+    private final long warnWindowMillis;
 
-    public Moderation(JavaPlugin plugin, ModerationStore store, ChatMutes mutes, Messages messages) {
+    public Moderation(JavaPlugin plugin, ModerationStore store, ChatMutes mutes, Messages messages,
+                      WarnEscalation escalation, long warnWindowMillis) {
         this.plugin = plugin;
         this.store = store;
         this.mutes = mutes;
         this.messages = messages;
+        this.menu = new ModerationMenu(messages);
+        this.escalation = escalation;
+        this.warnWindowMillis = warnWindowMillis;
     }
 
     /** durationMillis 0: kalıcı. */
     public void mute(CommandSender issuer, OfflinePlayer target, long durationMillis, String reason) {
-        if (!allowed(issuer, target)) {
-            return;
+        if (allowed(issuer, target)) {
+            applyMute(target, durationMillis, reason, issuer.getName());
         }
+    }
+
+    private void applyMute(OfflinePlayer target, long durationMillis, String reason, String issuer) {
         long now = System.currentTimeMillis();
         mutes.mute(target.getUniqueId(), durationMillis == 0 ? ChatMutes.PERMANENT : now + durationMillis);
-        record(target, Punishment.Type.MUTE, reason, issuer.getName(), now, durationMillis);
+        record(target, Punishment.Type.MUTE, reason, issuer, now, durationMillis);
         Player online = target.getPlayer();
         if (online != null) {
             online.sendMessage(messages.get("mod-muted-target", reason(reason), time(durationMillis)));
         }
         notifyStaff("mod-notice-mute", issuer, target, reason, durationMillis);
+    }
+
+    /**
+     * Gizli susturma: oyuncu yazmaya devam eder, mesajını sadece kendisi ve susturma yetkisi olanlar görür.
+     * Oyuncuya söylenmez; trol fark etmeden yavaşlasın. /unmute ikisini de kaldırır.
+     */
+    public void shadowMute(CommandSender issuer, OfflinePlayer target, long durationMillis, String reason) {
+        if (!allowed(issuer, target)) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        mutes.shadowMute(target.getUniqueId(), durationMillis == 0 ? ChatMutes.PERMANENT : now + durationMillis);
+        record(target, Punishment.Type.SHADOW_MUTE, reason, issuer.getName(), now, durationMillis);
+        notifyStaff("mod-notice-shadowmute", issuer.getName(), target, reason, durationMillis);
     }
 
     /** Spam susturması da geçmişe yazılsın (ChatListener çağırır). */
@@ -77,25 +100,30 @@ public final class Moderation implements Listener {
     /** Çevrimdışı oyuncunun susturması bellekte değil, veritabanında: ikisinden biri yeterli. */
     public void unmute(CommandSender issuer, OfflinePlayer target) {
         boolean inMemory = mutes.unmute(target.getUniqueId());
-        then(issuer, store.revokeActive(target.getUniqueId(), Punishment.Type.MUTE, issuer.getName(),
-                System.currentTimeMillis()), revoked -> {
+        long now = System.currentTimeMillis();
+        CompletableFuture<Integer> revokes = store.revokeActive(target.getUniqueId(), Punishment.Type.MUTE,
+                issuer.getName(), now).thenCombine(store.revokeActive(target.getUniqueId(),
+                Punishment.Type.SHADOW_MUTE, issuer.getName(), now), Integer::sum);
+        then(issuer, revokes, revoked -> {
             boolean was = inMemory || revoked > 0;
             issuer.sendMessage(messages.get(was ? "unmuted" : "not-muted", name(target)));
             if (was) {
-                notifyStaff("mod-notice-unmute", issuer, target, "", 0);
+                notifyStaff("mod-notice-unmute", issuer.getName(), target, "", 0);
             }
         });
     }
 
     public void ban(CommandSender issuer, OfflinePlayer target, long durationMillis, String reason) {
-        if (!allowed(issuer, target)) {
-            return;
+        if (allowed(issuer, target)) {
+            applyBan(target, durationMillis, reason, issuer.getName());
         }
-        long now = System.currentTimeMillis();
-        record(target, Punishment.Type.BAN, reason, issuer.getName(), now, durationMillis);
+    }
+
+    private void applyBan(OfflinePlayer target, long durationMillis, String reason, String issuer) {
+        record(target, Punishment.Type.BAN, reason, issuer, System.currentTimeMillis(), durationMillis);
         Player online = target.getPlayer();
         if (online != null) {
-            online.kick(banScreen(reason, durationMillis == 0 ? Long.MAX_VALUE : durationMillis, issuer.getName()));
+            online.kick(banScreen(reason, durationMillis == 0 ? Long.MAX_VALUE : durationMillis, issuer));
         }
         notifyStaff("mod-notice-ban", issuer, target, reason, durationMillis);
     }
@@ -105,16 +133,19 @@ public final class Moderation implements Listener {
                 System.currentTimeMillis()), revoked -> {
             issuer.sendMessage(messages.get(revoked > 0 ? "mod-unbanned" : "mod-not-banned", name(target)));
             if (revoked > 0) {
-                notifyStaff("mod-notice-unban", issuer, target, "", 0);
+                notifyStaff("mod-notice-unban", issuer.getName(), target, "", 0);
             }
         });
     }
 
     public void kick(CommandSender issuer, Player target, String reason) {
-        if (!allowed(issuer, target)) {
-            return;
+        if (allowed(issuer, target)) {
+            applyKick(target, reason, issuer.getName());
         }
-        record(target, Punishment.Type.KICK, reason, issuer.getName(), System.currentTimeMillis(), 0);
+    }
+
+    private void applyKick(Player target, String reason, String issuer) {
+        record(target, Punishment.Type.KICK, reason, issuer, System.currentTimeMillis(), 0);
         target.kick(messages.get("mod-kick-screen", reason(reason)));
         notifyStaff("mod-notice-kick", issuer, target, reason, 0);
     }
@@ -123,18 +154,47 @@ public final class Moderation implements Listener {
         if (!allowed(issuer, target)) {
             return;
         }
-        record(target, Punishment.Type.WARN, reason, issuer.getName(), System.currentTimeMillis(), 0);
+        long now = System.currentTimeMillis();
+        record(target, Punishment.Type.WARN, reason, issuer.getName(), now, 0);
         Player online = target.getPlayer();
         if (online != null) {
             online.sendMessage(messages.get("mod-warned-target", reason(reason)));
         }
-        notifyStaff("mod-notice-warn", issuer, target, reason, 0);
+        notifyStaff("mod-notice-warn", issuer.getName(), target, reason, 0);
+        if (!escalation.isEmpty()) {
+            // Veritabanı tek thread: sayım az önceki uyarının yazılmasından sonra çalışır, onu da sayar.
+            then(issuer, store.countSince(target.getUniqueId(), Punishment.Type.WARN, now - warnWindowMillis),
+                    count -> escalation.at(count).ifPresent(rule -> escalate(target, rule)));
+        }
     }
 
+    private void escalate(OfflinePlayer target, WarnEscalation.Rule rule) {
+        String issuer = messages.plain("mod-auto-issuer");
+        String reason = messages.plain("mod-auto-warn-reason",
+                Placeholder.unparsed("count", String.valueOf(rule.warnings())));
+        switch (rule.action()) {
+            case MUTE -> applyMute(target, rule.durationMillis(), reason, issuer);
+            case BAN -> applyBan(target, rule.durationMillis(), reason, issuer);
+            case KICK -> {
+                Player online = target.getPlayer();
+                if (online != null) {
+                    applyKick(online, reason, issuer);
+                }
+            }
+            default -> plugin.getLogger().warning("Otomatik cezada desteklenmeyen tür: " + rule.action());
+        }
+    }
+
+    /** Oyuncuya pencere, konsola sohbet satırları. */
     public void showHistory(CommandSender viewer, OfflinePlayer target) {
-        then(viewer, store.history(target.getUniqueId(), HISTORY_LIMIT), history -> {
+        then(viewer, store.history(target.getUniqueId(), ModerationMenu.PAGE_SIZE), history -> {
             if (history.isEmpty()) {
                 viewer.sendMessage(messages.get("mod-history-empty", name(target)));
+                return;
+            }
+            if (viewer instanceof Player player) {
+                menu.history(player, target, history, player.hasPermission(ModerationCommands.CHATLOG)
+                        ? () -> showChatLog(player, target, ModerationMenu.PAGE_SIZE) : null);
                 return;
             }
             viewer.sendMessage(messages.get("mod-history-header", name(target),
@@ -144,7 +204,7 @@ public final class Moderation implements Listener {
                 viewer.sendMessage(messages.get("mod-history-line",
                         Placeholder.unparsed("id", String.valueOf(entry.id())),
                         Placeholder.component("type", messages.get("mod-type-" + entry.type().name().toLowerCase(Locale.ROOT))),
-                        Placeholder.component("time", entry.type() == Punishment.Type.BAN || entry.type() == Punishment.Type.MUTE
+                        Placeholder.component("time", entry.isTimed()
                                 ? timeComponent(entry.isPermanent() ? 0 : entry.expires() - entry.created())
                                 : Component.empty()),
                         reason(entry.reason()),
@@ -161,6 +221,11 @@ public final class Moderation implements Listener {
         then(viewer, store.chatLog(target.getUniqueId(), limit), lines -> {
             if (lines.isEmpty()) {
                 viewer.sendMessage(messages.get("mod-chatlog-empty", name(target)));
+                return;
+            }
+            if (viewer instanceof Player player) {
+                menu.chatLog(player, target, lines, player.hasPermission(ModerationCommands.HISTORY)
+                        ? () -> showHistory(player, target) : null);
                 return;
             }
             viewer.sendMessage(messages.get("mod-chatlog-header", name(target),
@@ -209,9 +274,12 @@ public final class Moderation implements Listener {
             issuer.sendMessage(messages.get("mod-self"));
             return false;
         }
-        // shortcut: muafiyet sadece çevrimiçi hedefte bilinir; çevrimdışı izin kontrolü izin plugin'i (LuckPerms) ister.
+        // Çevrimdışı hedefin izinleri okunamaz; muafiyet varsayılan olarak op'tan geldiği için op'lar da korunur.
+        // shortcut: izin plugin'iyle (LuckPerms) op olmayan birine muafiyet verilirse, o kişi çevrimdışıyken korunmaz;
+        // o zaman muafiyeti izin plugin'inin API'sinden oku.
         Player online = target.getPlayer();
-        if (issuer instanceof Player && online != null && online.hasPermission(EXEMPT)) {
+        boolean exempt = online != null ? online.hasPermission(EXEMPT) : target.isOp();
+        if (issuer instanceof Player && exempt) {
             issuer.sendMessage(messages.get("mod-exempt", name(target)));
             return false;
         }
@@ -228,8 +296,8 @@ public final class Moderation implements Listener {
         });
     }
 
-    private void notifyStaff(String key, CommandSender issuer, OfflinePlayer target, String reason, long durationMillis) {
-        Component notice = messages.get(key, Placeholder.unparsed("issuer", issuer.getName()),
+    private void notifyStaff(String key, String issuer, OfflinePlayer target, String reason, long durationMillis) {
+        Component notice = messages.get(key, Placeholder.unparsed("issuer", issuer),
                 Placeholder.unparsed("target", Players.name(target)), reason(reason), time(durationMillis));
         for (Player staff : Bukkit.getOnlinePlayers()) {
             if (staff.hasPermission(NOTIFY)) {

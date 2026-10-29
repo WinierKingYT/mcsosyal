@@ -99,6 +99,18 @@ public final class ModerationStore {
         });
     }
 
+    /** since'den bu yana kaldırılmamış cezaların sayısı (uyarı birikince otomatik ceza için). */
+    public CompletableFuture<Integer> countSince(UUID player, Punishment.Type type, long since) {
+        return database.submit(connection -> {
+            try (PreparedStatement statement = Database.prepare(connection,
+                    "SELECT COUNT(*) FROM moderation_punishments WHERE player = ? AND type = ? AND created >= ? "
+                            + "AND revoked_at = 0", player.toString(), type.name(), since);
+                 ResultSet rows = statement.executeQuery()) {
+                return rows.next() ? rows.getInt(1) : 0;
+            }
+        });
+    }
+
     /** Girişte bakılır: en uzun süren aktif ban. */
     public CompletableFuture<Optional<Punishment>> activeBan(UUID player, long now) {
         return database.submit(connection -> {

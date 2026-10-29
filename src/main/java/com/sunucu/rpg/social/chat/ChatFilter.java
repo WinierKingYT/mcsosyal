@@ -144,6 +144,11 @@ public final class ChatFilter {
         return words.stream().anyMatch(bannedWords::contains);
     }
 
+    /** İzinli alan adları dahil her bağlantı ve IP (yeni oyuncu kısıtlaması için). */
+    public boolean containsLink(String text) {
+        return IP.matcher(text).find() || DOMAIN.matcher(text).find();
+    }
+
     boolean containsAdvertisement(String text) {
         if (IP.matcher(text).find()) {
             return true;

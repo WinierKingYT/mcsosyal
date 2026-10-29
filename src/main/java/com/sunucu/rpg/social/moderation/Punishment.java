@@ -9,9 +9,14 @@ import java.util.UUID;
 public record Punishment(long id, UUID player, String playerName, Type type, String reason, String issuer,
                          long created, long expires, long revokedAt, String revokedBy) {
 
-    public enum Type { BAN, MUTE, KICK, WARN }
+    public enum Type { BAN, MUTE, SHADOW_MUTE, KICK, WARN }
 
     public enum Status { ACTIVE, EXPIRED, REVOKED, DONE }
+
+    /** Süresi olan cezalar: ban ve susturmalar. */
+    public boolean isTimed() {
+        return type == Type.BAN || type == Type.MUTE || type == Type.SHADOW_MUTE;
+    }
 
     public boolean isPermanent() {
         return expires == 0;

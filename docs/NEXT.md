@@ -66,17 +66,80 @@
   çevrimdışı da), `/kick`, `/warn`, `/unmute`, `/unban`, `/geçmiş`, `/chatlog` (sohbet + özel mesaj kaydı, 30 gün),
   `/şikayet` (60 sn bekleme, yetkiliye butonlu bildirim), `/şikayetler [kapat <no>]`. Ban girişten önce kontrol
   edilir (kontrol edilemezse giriş reddedilir). Spam susturması da geçmişe yazılır. `/chat unmute` kaldırıldı.
-  `rpg.moderation.exempt` sadece çevrimiçi hedefte bilinir. DB yoksa moderasyon kapalı. Testler 70/70.
+  `rpg.moderation.exempt` çevrimdışı hedefte op'a bakar. DB yoksa moderasyon kapalı. Testler 70/70.
+- 2026-10-29: Oyunda doğrulandı: veritabanı (yeniden başlatınca kalıcı), arkadaş, profil, duyuru, şikayet, geçmiş,
+  chatlog. `/geçmiş` ve `/chatlog` oyuncuya artık pencere (`ModerationMenu`): her ceza bir eşya (aktif olan parlar),
+  her mesaj bir kağıt, üstüne gelince tarih/kanal/tam metin; alt sırada iki pencere arası geçiş. Tek sayfa, en yeni
+  45 kayıt; konsola eskisi gibi satır. `rpg.role.moderator`: LuckPerms ile tek izin, moderasyon araçları + `[inv]`
+  düzenleme (ban, muafiyet ve [Mod] rozeti hariç). Not: kendi `[inv]`'in her zaman salt okunur; op filtreyi atlar
+  (örs `site.com` testi op olmayan hesapla yapılmalı); `/duyuru` tıklamayı bilerek kapatır, ipuçlarında çalışır.
+- 2026-10-29: Moderasyon 2. tur. `/gizlisustur` (shadowmute): oyuncu yazar, mesajını sadece kendisi ve
+  `rpg.moderation.mute` olanlar görür ([Gizli] etiketiyle); özel mesajı karşıya gitmez; `/unmute` kaldırır; ayar
+  `social_settings` `mute.shadow`. Tek mesaj silme: `rpg.moderation.delete` olana mesajın yanında [x] (imzalı
+  mesajda, tek kullanım, 10 dk). Profilde yetkili sırası (`profile.StaffButtons`, `moderation.ProfileStaffButtons`):
+  geçmiş, sohbet kaydı, envanter, ceza ver (sohbete komut önerileri). Uyarı birikince otomatik ceza
+  (`moderation.warn-escalation`, son 30 gün, tam sayıda). Yeni oyuncu (`moderation.new-player-minutes` 10): bağlantı
+  yok, sadece yetkililere özel mesaj. Testler 82/82.
+- 2026-10-29: Hata: güncellemeden sonraki ilk açılışta yeni mesajlar boş çıkıyordu (`getString(key, "")` varsayılana
+  bakmaz); profil butonlarında isim yoktu, [Gizli] etiketi ve otomatik ceza sebebi boştu. `Messages` ve
+  `ChatChannel` düzeltildi, test eklendi. Oyunda doğrulandı: uyarı → otomatik susturma ve ban, gizli susturma.
+- 2026-10-29: Profil yeni düzen (sahibin çizdiği, 6 sıra): ortada giydikleri, solunda ana el, sağında ikinci el
+  (boş: zırh kırmızı, birinci el turuncu, ikinci el sarı), solda pet 19 ve binek 28 (açık mavi cam), sağda
+  ayarlar 25 (kendi profilinde) ve saat 34, en altta ustalık aletleri (kazma 47, kürek 48, balta 50, çapa 51;
+  `ProfileProvider` bağlanana kadar "Yakında"), sağ altta saat (süre + ölüm, öldürme, yürünen yol). Kafanın
+  yanında mesaj/arkadaş/engelle, yetkili butonları ayakkabının iki yanında. Çerçeve beyaz, iç açık gri, kafa yanları koyu gri; camların yazısı yok. Oyunda denenmedi.
+- 2026-10-29: Parti sistemi (`social.party`), geçici (bellekte, yeniden başlayınca dağılır). `/parti` (party): panel;
+  davet (sadece lider, 60 sn), kabul/reddet (sohbette butonlu), at, lider, ayrıl. En fazla `party.max-size` (5, 2–7).
+  Lider ayrılınca sıradaki lider; 1 kişi kalınca dağılır; çıkan üye partide kalır, giriş/çıkış haberi gider.
+  Parti sohbeti: `chat.channels.party` + `ChannelGate` (sadece üyeler görür), kısayol `/p`. /sosyal'da Parti butonu,
+  profilde "Partiye davet et" (slot 6). Engelleyene davet gitmez (gönderene söylenmez). RPG: `SocialModule#parties()`.
+  Testler 93/93.
+- 2026-10-29: Parti akışı sahibin isteğiyle: önce `/parti kur` (kurucu lider, ad "İsim Partisi"), davet partisi
+  olana. `/parti` partisizken lobi: Parti Kur, Mevcut Partiler (açık partiler, tıkla katıl), Davetler. Partideyken
+  panel + Parti Ayarları (sadece lider değiştirir): Herkese Açık (liste/davetsiz katılma), Üyeler Davet Edebilir,
+  Dost Ateşi (kapalıyken parti içi oyuncu ve mermi hasarı engellenir). `/parti katıl <lider>`, `/parti ayarlar`.
+  Varsayılanlar `party.defaults`. Son üye ayrılınca dağılır (tek kişilik parti olur). Testler 95/95. Oyunda denenmedi.
+- 2026-10-29: Parti etiketi, rengi, açıklaması (lider; ayarlar menüsü + `/parti etiket [X]`, `/parti açıklama [metin]`,
+  boş: siler). Etiket 2-5 harf/rakam, partiler arasında tek; etiket ve açıklama sohbet filtresinden geçer. Sohbette
+  etiket yok: aynı partidekiler birbirinin mesajını partinin renginde görür (`MessageTint`, komut gerekmez; gönderen
+  kendi mesajını normal görür). Renkler `PartyColor` (8 renk, varsayılan `party.defaults.color` aqua). Listede ve
+  panelde "[ETİKET] Ad" partinin renginde, açıklama altında. Testler 97/97. Oyunda denenmedi.
+- 2026-10-29: Parti paneli sahibin çizimiyle (6 sıra): üstte bilgi kitabı (lider, kişi, görünürlük, dost ateşi, renk,
+  açıklama + RPG satırları `PartyInfo`, `SocialModule#setPartyInfo`), 11-15 üyeler (boş yer yeşil cam: tıkla, çevrimiçi
+  partisiz oyunculardan seç ve davet et), 45 geri, 48 bariyer (lider: shift + sol tık partiyi kapatır; üye: ayrılır),
+  50 ayarlar. Testler 98/98.
+- 2026-10-29: Parti boyutu her partinin kendi ayarı (2-10, sandık ikonu: sol +1, sağ -1; üye sayısının altına inmez).
+  Yeni parti `party.default-size` (5), lider en fazla `party.size-limit` (5); VIP `rpg.party.size.<n>` ile n'ye
+  kadar; admin 10. `/parti admin` (`rpg.party.admin`): gizliler dahil tüm partiler, her partinin ayarlarını değiştirir,
+  etiket/açıklamayı temizler, partiyi kapatır (shift + sol). Yetki kontrolü tek yerde (`PartyActions#canEdit`),
+  `Parties` düzenlemeleri parti numarasıyla. Panelde 10 üye yeri (11-15, 20-24). Testler 99/99. Oyunda denenmedi.
+  Sonra (sahip seçerse): parti seviyesi/XP (RPG), parti evi ve ışınlanma, şifre, rütbeler.
 
 ## Yol haritası (sahibin seçtiği sıra)
 1. [x] Arkadaş listesi
 2. [x] Oyuncu profili (`/profil`, kart + oynama süresi + arkadaş ekle butonu)
 3. [x] Duyuru sistemi
-4. [~] Moderasyon: 1. tur tamam (ceza, ban, geçmiş, sohbet kaydı, şikayet). 2. tur: gizli susturma, tek mesaj
-   silme, profilde yetkili butonları, uyarı birikince otomatik ceza, yeni hesap kısıtlaması
-5. [ ] Belki parti sistemi (arkadaşla sınır konuşulacak)
+4. [x] Moderasyon: 1. ve 2. tur
+5. [x] Parti sistemi (sosyal taraf; XP/ganimet/zindan RPG tarafında `parties()` ile)
+
+## Oyunda doğrulanacak (parti)
+- [ ] `/parti` lobi → Parti Kur; ikinci hesap Mevcut Partiler'den katılıyor; gizli yapınca listede yok
+- [ ] `/parti davet İsim` → [Katıl]/[Reddet]; 60 sn sonra davet geçersiz; panelde kafadan profil
+- [ ] `/p selam` sadece parti üyelerine; partisizken "Bir partide değilsin"; /sosyal'da Parti kanalı
+- [ ] Dost ateşi kapalıyken üyeler birbirine vuramıyor (kılıç ve ok), açınca vurabiliyor
+- [ ] Aynı partideki üyenin global mesajı partinin renginde, partide olmayan normal görüyor; renk değişince
+  hemen uyuyor; etiket/açıklama listede ve panelde
+- [ ] Lider ayrılınca liderlik geçiyor, son kişi ayrılınca parti dağılıyor; panelde at ve lider yap
+- [ ] Panel çizimdeki gibi; boş yere tıklayınca davet listesi; lider bariyerle (shift + sol) partiyi kapatıyor
+- [ ] Ayarlarda boyut: normal oyuncu 5'i geçemiyor, `rpg.party.size.10` ile 10; `/parti admin` başka partiyi düzenliyor
+- [ ] Profilde "Partiye davet et" (kafanın sağı); üye oyuna girince/çıkınca partiye haber
 
 ## Oyunda doğrulanacak (moderasyon)
+- [ ] `/gizlisustur`: susturulan kendi mesajını görüyor, başka oyuncu görmüyor, yetkili [Gizli] ile görüyor; `/unmute`
+- [ ] Sohbette [x] çıkıyor mu (çıkmıyorsa sohbet imzasız demek), tıklayınca mesaj herkesten siliniyor mu
+- [ ] Profilde yetkili sırası; Ceza ver → sohbete tıklanabilir komutlar; envanter düzenleniyor mu
+- [ ] 3. `/warn` → 1 sa susturma otomatik; yeni oyuncu bağlantı ve özel mesaj atamıyor (op olmayan hesapla)
+- [ ] `/geçmiş` ve `/chatlog` pencereleri, geçiş butonu, şikayetteki [Geçmiş]/[Sohbet] pencere açıyor mu
 - [ ] `/ban Ahmet 1m test`: oyuncu atılıyor, ekranda sebep/süre/yetkili; 1 dk sonra girebiliyor; `/unban`
 - [ ] `/mute` süreli ve kalıcı, çıkıp girince sürüyor; `/unmute` çevrimdışı oyuncuda da
 - [ ] `/geçmiş`, `/chatlog` (özel mesaj `msg>İsim` kanalıyla), `/şikayet` → yetkiliye butonlar, `/şikayetler kapat`
@@ -133,11 +196,14 @@
 - [x] Veritabanı katmanı (SQLite): kanal seçimi, gizli kanallar, bildirimler, `/ignore`, susturmalar kalıcı
 - [ ] Mute + gizli susturma
 - [ ] Tek mesaj silme
-- [ ] Sohbet logu (30 gün)
-- [ ] Yeni hesap kısıtlaması (oynama süresi sistemi gerekir)
+- [x] Sohbet logu (30 gün)
+- [x] Yeni hesap kısıtlaması
 
 ## RPG tarafına bağlı (arkadaşla konuşulacak)
 - [ ] `TagProvider` uygulaması (sınıf, seviye, lonca)
+- [ ] `PartyInfo` uygulaması: parti panelindeki kitaba buff, stat, XP paylaşımı satırları
+- [ ] `ProfileProvider` uygulaması: ustalık seviyeleri (mining, excavation, farming, woodcutting), tıklayınca
+  ustalık paneli, takılı pet ve binek ikonu, pet ve binek menüsü (`SocialModule#setProfileProvider`)
 - [ ] Parti ve lonca kanalları
 - [ ] Oyun olayı duyuruları için RPG olayları
 - [ ] Paket adı `com.sunucu` yer tutucu: gerçek adı birlikte seçin

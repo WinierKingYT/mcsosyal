@@ -8,6 +8,7 @@ import com.sunucu.rpg.social.profile.Playtime;
 import com.sunucu.rpg.social.profile.ProfileMenu;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -15,13 +16,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.chat.SignedMessage;
+import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -37,6 +42,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class ChatListener implements Listener {
 
     public static final String BYPASS = "rpg.social.chat.bypass";
+    /** Gizli susturulanın mesajını görür (susturma yetkisi olan). */
+    public static final String SEE_SHADOW = "rpg.moderation.mute";
+    /** Sohbette mesajın yanında [x]: tıklayınca mesaj herkesin ekranından silinir. */
+    public static final String DELETE = "rpg.moderation.delete";
+    private static final Duration DELETE_LIFETIME = Duration.ofMinutes(10);
     private static final long MILLIS_PER_SECOND = 1000;
     private static final long MILLIS_PER_MINUTE = 60_000;
 
@@ -56,12 +66,15 @@ public final class ChatListener implements Listener {
     private final String localPrefix;
     private final Map<String, ChatChannel> channels = new LinkedHashMap<>();
     private final Map<String, Component> badges = new LinkedHashMap<>();
+    private final Map<String, ChannelGate> gates = new ConcurrentHashMap<>();
     private volatile TagProvider tagProvider = TagProvider.NONE;
     private volatile StatsProvider statsProvider = StatsProvider.NONE;
     private volatile ChatLog chatLog = ChatLog.NONE;
     private volatile Consumer<Player> onAutoMute = player -> {
     };
     private volatile boolean locked;
+    private volatile NewPlayerRule newPlayers = NewPlayerRule.NONE;
+    private volatile MessageTint tint = MessageTint.NONE;
 
     public ChatListener(JavaPlugin plugin, ConfigurationSection chat, Messages messages, ChatFilter filter,
                         PrivateMessages privateMessages, Notifications notifications, Showcase showcase,
@@ -128,8 +141,14 @@ public final class ChatListener implements Listener {
         Component name = nameComponent(sender);
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         // Her izleyici kendi adını vurgulu görür, bu yüzden renderer izleyiciye göre çalışır.
-        ChatRenderer renderer = (source, displayName, message, viewer) ->
-                render(sender, channel, tags, name, shared.apply(mentionMessage(filtered, mentions, viewer)));
+        SignedMessage.Signature signature = event.signedMessage().signature();
+        ChatRenderer renderer = (source, displayName, message, viewer) -> {
+            Component line = render(sender, channel, tags, name,
+                    tinted(sender, viewer, shared.apply(mentionMessage(filtered, mentions, viewer))), viewer);
+            // İmzasız mesaj (ör. sunucu imzayı kapattıysa) silinemez; o zaman buton da yok.
+            return signature != null && viewer instanceof Player staff && !staff.equals(sender)
+                    && staff.hasPermission(DELETE) ? line.append(deleteButton(signature, sender.getName())) : line;
+        };
         event.renderer(renderer);
 
         Set<Audience> viewers = Set.copyOf(event.viewers());
@@ -160,10 +179,11 @@ public final class ChatListener implements Listener {
             if (canSee(channel, sender, viewer)) {
                 viewers.add(viewer);
                 viewer.sendMessage(render(sender, channel, tags, name,
-                        shared.apply(mentionMessage(filtered, mentions, viewer))));
+                        tinted(sender, viewer, shared.apply(mentionMessage(filtered, mentions, viewer))), viewer));
             }
         }
-        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, name, shared.apply(Component.text(filtered))));
+        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, name, shared.apply(Component.text(filtered)),
+                Bukkit.getConsoleSender()));
         chatLog.record(sender, channel.key(), filtered);
         notifyMentioned(sender, mentions, viewers::contains);
     }
@@ -243,6 +263,29 @@ public final class ChatListener implements Listener {
         this.onAutoMute = listener;
     }
 
+    /** Parti modülü bağlar: aynı partidekiler birbirinin mesajını partinin renginde görür. */
+    public void setMessageTint(MessageTint tint) {
+        this.tint = tint == null ? MessageTint.NONE : tint;
+    }
+
+    /** Renksiz kısımlar (düz metin) izleyiciye özel renge boyanır; etiket gibi kendi rengi olanlar değişmez. */
+    private Component tinted(Player sender, Audience viewer, Component message) {
+        if (!(viewer instanceof Player player) || player.equals(sender)) {
+            return message;
+        }
+        TextColor color = tint.tint(sender, player);
+        return color == null ? message : message.colorIfAbsent(color);
+    }
+
+    /** Üyeliğe bağlı kanal: parti modülü "party" kanalını bağlar. */
+    public void setChannelGate(String channelKey, ChannelGate gate) {
+        gates.put(channelKey, gate);
+    }
+
+    public void setNewPlayerRule(NewPlayerRule rule) {
+        this.newPlayers = rule;
+    }
+
     public void setStatsProvider(StatsProvider provider) {
         this.statsProvider = provider == null ? StatsProvider.NONE : provider;
     }
@@ -261,6 +304,11 @@ public final class ChatListener implements Listener {
         if (channel.permission() != null && !sender.hasPermission(channel.permission())) {
             return null;
         }
+        ChannelGate gate = gates.get(channel.key());
+        if (gate != null && !gate.canSend(sender)) {
+            sender.sendMessage(messages.get(gate.deniedKey()));
+            return null;
+        }
         if (locked && !bypass && channel.permission() == null) {
             sender.sendMessage(messages.get("chat-locked"));
             return null;
@@ -270,6 +318,10 @@ public final class ChatListener implements Listener {
         }
         long now = System.currentTimeMillis();
         if (isMuted(sender, now)) {
+            return null;
+        }
+        if (newPlayers.applies(sender) && filter.containsLink(text)) {
+            sender.sendMessage(messages.get("new-player-link", newPlayers.minutes()));
             return null;
         }
         ChatFilter.Result result = filter.check(sender.getUniqueId(), channel.key(), channel.cooldownMillis(),
@@ -330,10 +382,17 @@ public final class ChatListener implements Listener {
         if (viewer.equals(sender)) {
             return true;
         }
+        if (mutes.isShadowMuted(sender.getUniqueId(), System.currentTimeMillis()) && !viewer.hasPermission(SEE_SHADOW)) {
+            return false;
+        }
         if (privateMessages.isIgnoring(viewer, sender) || preferences.isHidden(viewer.getUniqueId(), channel.key())) {
             return false;
         }
         if (channel.permission() != null && !viewer.hasPermission(channel.permission())) {
+            return false;
+        }
+        ChannelGate gate = gates.get(channel.key());
+        if (gate != null && !gate.canSee(sender, viewer)) {
             return false;
         }
         return channel.radius() <= 0 || inRange(sender, viewer, channel.radius());
@@ -389,6 +448,27 @@ public final class ChatListener implements Listener {
             names.put(player.getName().toLowerCase(Locale.ROOT), player.getName());
         }
         return names;
+    }
+
+    /** Gizli susturulanın mesajı yetkiliye (ve konsola) [Gizli] etiketiyle görünür; gönderen etiketi görmez. */
+    private Component render(Player sender, ChatChannel channel, Component tags, Component name, Component message,
+                             Audience viewer) {
+        Component line = render(sender, channel, tags, name, message);
+        return !sender.equals(viewer) && mutes.isShadowMuted(sender.getUniqueId(), System.currentTimeMillis())
+                ? messages.get("shadow-tag").append(line) : line;
+    }
+
+    /** Tek kullanımlık: ilk tıklayan yetkili siler, mesaj herkesin sohbetinden kalkar. */
+    private Component deleteButton(SignedMessage.Signature signature, String senderName) {
+        return messages.get("delete-button").hoverEvent(messages.get("delete-hover"))
+                .clickEvent(ClickEvent.callback(audience -> {
+                    if (!(audience instanceof Player staff) || !staff.hasPermission(DELETE)) {
+                        return;
+                    }
+                    Bukkit.getServer().deleteMessage(signature);
+                    staff.sendMessage(messages.get("message-deleted", Placeholder.unparsed("name", senderName)));
+                    plugin.getLogger().info(staff.getName() + ", " + senderName + " oyuncusunun bir mesajını sildi");
+                }, options -> options.uses(1).lifetime(DELETE_LIFETIME)));
     }
 
     private Component render(Player sender, ChatChannel channel, Component tags, Component name, Component message) {

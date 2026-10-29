@@ -8,7 +8,7 @@
   Değeri olmayan satır görünmez.
 - **Yetkili rozetleri:** `[Admin]`, `[Mod]`, `[Rehber]`, izne bağlı (`chat.badges`).
 - **Kanallar:** oyuncu yazacağı kanalı `/sosyal` → Sohbet Kanalları'ndan seçer (sol tık), istemediği kanalı
-  gizler (sağ tık). Komut kalabalığı olmasın diye kanal başına komut yok; sadece yetkililer için `/sc`.
+  gizler (sağ tık). Komut kalabalığı olmasın diye kanal başına komut yok; sadece yetkililer için `/sc` ve parti için `/p`.
 
   | Kanal | Kim görür | Kısayol | Bekleme |
   |---|---|---|---|
@@ -16,7 +16,8 @@
   | Yerel | 64 blok | `!` öneki (hangi kanal seçiliyse) | 2 sn |
   | Ticaret | Herkes | panel | 3 sn |
   | Yardım | Herkes | panel | 2 sn |
-  | Parti / Lonca | Üyeler | panel (parti/lonca gelince) | — |
+  | Parti | Parti üyeleri (`ChannelGate`) | panel, `/p` | 1 sn |
+  | Lonca | Üyeler | panel (lonca gelince) | — |
   | Yetkili | Moderatörler | panel, `/sc` | — |
 
 - **Özel mesaj:** `/msg` (`/tell`, `/w`), `/r`, `/ignore`, moderatörler için `/socialspy`.

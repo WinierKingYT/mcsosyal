@@ -13,13 +13,14 @@ Nerede kaldığımız: [docs/NEXT.md](docs/NEXT.md). Sohbet tasarımı: [docs/CH
 ## Yapı
 - `RpgPlugin` tek ana sınıf. Her sistem bir `Module` ve `onEnable` içine tek satırla eklenir.
 - Herkes kendi paketinde çalışır: sosyal taraf `com.sunucu.rpg.social` (`chat`, `friends`, `profile`, `announce`,
-  `moderation`), bölge ve atmosfer
+  `moderation`, `party`), bölge ve atmosfer
   `com.sunucu.rpg.world`,
   ortak araçlar `com.sunucu.rpg.core`.
   Arkadaşın paketlerine (`combat`, `classes`, `quest`, `items` vb.) dokunma.
 - Komutlar `paper-plugin.yml`'e değil, modülün içinde Brigadier ile kaydedilir (`LifecycleEvents.COMMANDS`).
 - İzinler `paper-plugin.yml`'de, `rpg.social.*` önekiyle.
-- RPG verisi (sınıf, seviye, eşya) sosyal tarafa arayüzlerle gelir (`TagProvider`, `StatsProvider`),
+- RPG verisi (sınıf, seviye, eşya) sosyal tarafa arayüzlerle gelir (`TagProvider`, `StatsProvider`,
+  `ProfileProvider`: profildeki ustalıklar ve pet); RPG partiyi `SocialModule#parties()` ile okur, parti kitabına `PartyInfo` ile yazar,
   koda doğrudan erişilmez.
 - Menüler `core.gui.Menu` ile yapılır (iki taraf da kullanır): eşyalar alınamaz, buton işleri sonraki tick'te
   çalışır. Ayrı bir menü sistemi kurulmaz.
