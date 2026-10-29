@@ -13,6 +13,12 @@ public final class RpgPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        // Güncellemeden sonra yeni ayarlar mevcut dosyaya eklenir, sahibin değiştirdiği değerler korunur.
+        // Dosya bozuksa (YAML hatası) üstüne yazılmaz, yoksa sahibin ayarları varsayılanlarla silinirdi.
+        if (getConfig().isConfigurationSection("chat")) {
+            getConfig().options().copyDefaults(true);
+            saveConfig();
+        }
         social = new SocialModule(this);
         // Her sistem buraya tek satır ekler, gerisi kendi paketinde durur.
         modules = List.of(social);

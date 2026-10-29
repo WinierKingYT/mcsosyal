@@ -19,6 +19,17 @@
   `<badge>` yer tutucusu, Admin/Mod/Rehber), `/socialspy` (konsol da görür), AFK (`AfkTracker`: 300 sn,
   `/afk`, tab'da soluk isim, AFK'ya mesaj atana not). `ItemShare` → `ChatTokens`. Testler 14/14. Oyunda denenmedi.
   `ChatListener` 387 satır: büyürse eşya/konum görünümünü ayrı sınıfa ayır.
+- 2026-10-29: İlk sunucu denemesinde plugin açılmadı: `config.yml`'de iki satırda `anahtar:"..."` (boşluk yok).
+  Düzeltildi; `ConfigTest` artık YAML'ı ayrıştırıyor ve koddaki her `messages.get` anahtarının config'de
+  olduğunu kontrol ediyor. Config bozuksa açık hata mesajı. Testler 16/16. Oyun içi test devam ediyor.
+- 2026-10-29: Oyun içi test (tek hesap) geçti: format, rozet, kanallar, kelime/reklam/büyük harf filtresi, [item],
+  [konum], kilit/temizle, AFK, etiketleme. Örs ismi `site.com` olan eşya paylaşılabildi: op (bypass) iken mi
+  denendi, doğrulanacak. Social spy denenmedi (3. hesap gerekir).
+- 2026-10-29: Test geri bildirimi: tekrar penceresi 3 sn (`duplicate-window-millis`) ve mesajlarda kalan süre
+  (`<seconds>`); `[i]` kısa yolu; `[inv]` envanter paylaşımı; eşya/envantere tıklayınca salt okunur pencere
+  (Paper click callback, 10 dk); `regions` ile [konum]'da bölge adı (`com.sunucu.rpg.world.Regions`); etiketlenince
+  ekranda başlık (10 sn bekleme). `ChatListener` → `Showcase` ayrıldı. Config güncellemede eksik anahtarlar mevcut
+  dosyaya eklenir (bozuk dosyanın üstüne yazılmaz). Testler 22/22. Oyunda denenmedi.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -40,6 +51,13 @@
 - [x] Yetkili rozetleri (Rehber dahil)
 - [x] Social spy
 - [x] AFK durumu
+
+## Oyunda doğrulanacak
+- [ ] Örs ismi `site.com` olan eşya op değilken `[i]` ile engelleniyor mu
+- [ ] Eşyaya ve `[inv]`'e tıklayınca pencere açılıyor, içinden eşya alınamıyor mu
+- [ ] Etiketlenince ekran yazısı, 10 sn içinde ikinci etikette tekrar çıkmıyor mu
+- [ ] `[konum]` Başlangıç Köyü içinde bölge adını gösteriyor mu
+- [ ] Social spy (3 hesap)
 
 ## Moderasyon (sohbete bağlı)
 - [ ] Veritabanı katmanı (SQLite). Engellemeler (`/ignore`) kalıcı hale gelir.

@@ -14,6 +14,15 @@ class ChatTokensTest {
         assertTrue(ChatTokens.has(ChatTokens.ITEM, "yeni [eşya] geldi"));
         assertTrue(ChatTokens.has(ChatTokens.ITEM, "[EŞYA]"));
         assertTrue(ChatTokens.has(ChatTokens.ITEM, "[esya]"));
+        assertTrue(ChatTokens.has(ChatTokens.ITEM, "kısa yol [i]"));
+        assertTrue(ChatTokens.has(ChatTokens.ITEM, "[I]"));
+    }
+
+    @Test
+    void detectsInventoryTokens() {
+        assertTrue(ChatTokens.has(ChatTokens.INVENTORY, "envanterim [inv]"));
+        assertTrue(ChatTokens.has(ChatTokens.INVENTORY, "[ENVANTER]"));
+        assertFalse(ChatTokens.has(ChatTokens.ITEM, "[inv]"));
     }
 
     @Test

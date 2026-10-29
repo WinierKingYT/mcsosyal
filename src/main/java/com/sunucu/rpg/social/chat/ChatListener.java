@@ -4,7 +4,6 @@ import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.social.TagProvider;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -13,7 +12,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -21,46 +19,40 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.block.Container;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BlockStateMeta;
-import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.inventory.meta.BundleMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ChatListener implements Listener {
 
     public static final String BYPASS = "rpg.social.chat.bypass";
-    private static final int MAX_ITEM_DEPTH = 2;
+    private static final long MILLIS_PER_SECOND = 1000;
 
     private final JavaPlugin plugin;
     private final Messages messages;
     private final ChatFilter filter;
     private final PrivateMessages privateMessages;
     private final Notifications notifications;
+    private final Showcase showcase;
     private final String format;
     private final String localPrefix;
     private final Map<String, ChatChannel> channels = new LinkedHashMap<>();
     private final Map<String, Component> badges = new LinkedHashMap<>();
-    private final Map<String, String> worldNames = new HashMap<>();
     private volatile TagProvider tagProvider = TagProvider.NONE;
     private volatile boolean locked;
 
     public ChatListener(JavaPlugin plugin, ConfigurationSection chat, Messages messages, ChatFilter filter,
-                        PrivateMessages privateMessages, Notifications notifications) {
+                        PrivateMessages privateMessages, Notifications notifications, Showcase showcase) {
         this.plugin = plugin;
         this.messages = messages;
         this.filter = filter;
         this.privateMessages = privateMessages;
         this.notifications = notifications;
+        this.showcase = showcase;
         this.format = chat.getString("format", "<name>: <message>");
         this.localPrefix = chat.getString("local-prefix", "!");
         ConfigurationSection section = chat.getConfigurationSection("channels");
@@ -75,10 +67,6 @@ public final class ChatListener implements Listener {
         for (Map<?, ?> badge : chat.getMapList("badges")) {
             badges.put(String.valueOf(badge.get("permission")), Messages.parse(String.valueOf(badge.get("tag"))));
         }
-        ConfigurationSection worlds = chat.getConfigurationSection("world-names");
-        if (worlds != null) {
-            worlds.getKeys(false).forEach(world -> worldNames.put(world, worlds.getString(world)));
-        }
     }
 
     /** Normal sohbet: global, ya da önek varsa yerel. İmzalı sohbet korunur. */
@@ -89,16 +77,11 @@ public final class ChatListener implements Listener {
         boolean local = text.startsWith(localPrefix) && text.length() > localPrefix.length();
         ChatChannel channel = channels.get(local ? ChatChannel.LOCAL : ChatChannel.GLOBAL);
         String filtered = prepare(sender, channel, local ? text.substring(localPrefix.length()).strip() : text);
-        if (filtered == null) {
+        Showcase.Shared shared = filtered == null ? null : showcase.prepare(sender, filtered);
+        if (shared == null) {
             event.setCancelled(true);
             return;
         }
-        Component item = ChatTokens.has(ChatTokens.ITEM, filtered) ? sharedItem(sender) : null;
-        if (ChatTokens.has(ChatTokens.ITEM, filtered) && item == null) {
-            event.setCancelled(true);
-            return;
-        }
-        Component location = ChatTokens.has(ChatTokens.LOCATION, filtered) ? sharedLocation(sender) : null;
 
         // Oyuncu metni düz metin olarak girer, MiniMessage etiketleri çalışmaz.
         event.message(Component.text(filtered));
@@ -107,11 +90,11 @@ public final class ChatListener implements Listener {
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         // Her izleyici kendi adını vurgulu görür, bu yüzden renderer izleyiciye göre çalışır.
         ChatRenderer renderer = (source, displayName, message, viewer) ->
-                render(sender, channel, tags, decorate(mentionMessage(filtered, mentions, viewer), item, location));
+                render(sender, channel, tags, shared.apply(mentionMessage(filtered, mentions, viewer)));
         event.renderer(renderer);
 
         Set<Audience> viewers = Set.copyOf(event.viewers());
-        // Ses ana thread'de çalınır.
+        // Ses ve ekran yazısı ana thread'de.
         Bukkit.getScheduler().runTask(plugin, () -> notifyMentioned(sender, mentions, viewers::contains));
     }
 
@@ -125,14 +108,10 @@ public final class ChatListener implements Listener {
             return;
         }
         String filtered = prepare(sender, channel, text);
-        if (filtered == null) {
+        Showcase.Shared shared = filtered == null ? null : showcase.prepare(sender, filtered);
+        if (shared == null) {
             return;
         }
-        Component item = ChatTokens.has(ChatTokens.ITEM, filtered) ? sharedItem(sender) : null;
-        if (ChatTokens.has(ChatTokens.ITEM, filtered) && item == null) {
-            return;
-        }
-        Component location = ChatTokens.has(ChatTokens.LOCATION, filtered) ? sharedLocation(sender) : null;
         Component tags = tagProvider.tags(sender);
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         Set<Player> viewers = new HashSet<>();
@@ -140,11 +119,10 @@ public final class ChatListener implements Listener {
             if (canSee(channel, sender, viewer)) {
                 viewers.add(viewer);
                 viewer.sendMessage(render(sender, channel, tags,
-                        decorate(mentionMessage(filtered, mentions, viewer), item, location)));
+                        shared.apply(mentionMessage(filtered, mentions, viewer))));
             }
         }
-        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags,
-                decorate(Component.text(filtered), item, location)));
+        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, shared.apply(Component.text(filtered))));
         notifyMentioned(sender, mentions, viewers::contains);
     }
 
@@ -164,6 +142,7 @@ public final class ChatListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         filter.forget(event.getPlayer().getUniqueId());
         privateMessages.forget(event.getPlayer().getUniqueId());
+        notifications.forget(event.getPlayer().getUniqueId());
     }
 
     public boolean toggleLock() {
@@ -191,7 +170,10 @@ public final class ChatListener implements Listener {
         ChatFilter.Result result = filter.check(sender.getUniqueId(), channel.key(), channel.cooldownMillis(),
                 text, System.currentTimeMillis());
         if (result.verdict() != ChatFilter.Verdict.OK) {
-            sender.sendMessage(messages.get(messageKey(result.verdict())));
+            // Yukarı yuvarla: 0,4 saniye kaldıysa "1 saniye bekle" yazsın, "0" değil.
+            long seconds = (result.waitMillis() + MILLIS_PER_SECOND - 1) / MILLIS_PER_SECOND;
+            sender.sendMessage(messages.get(messageKey(result.verdict()),
+                    Placeholder.unparsed("seconds", String.valueOf(seconds))));
             return null;
         }
         return result.text();
@@ -214,102 +196,6 @@ public final class ChatListener implements Listener {
             return false;
         }
         return channel.radius() <= 0 || inRange(sender, viewer, channel.radius());
-    }
-
-    /**
-     * Eldeki eşyanın sohbet görünümü (üstüne gelince eşya bilgisi). Örs ile verilmiş isim filtreye takılırsa
-     * oyuncuya sebebi söylenir ve null döner.
-     */
-    // shortcut: envanter async thread'den okunup kopyalanıyor (sohbet plugin'lerinde yaygın); sorun çıkarsa ana thread'e taşı.
-    private Component sharedItem(Player sender) {
-        ItemStack hand = sender.getInventory().getItemInMainHand().clone();
-        if (hand.isEmpty()) {
-            return messages.get("item-empty");
-        }
-        if (!sender.hasPermission(BYPASS)) {
-            ChatFilter.Verdict verdict = filter.checkContent(String.join("\n", hoverTexts(hand, 0)));
-            if (verdict != ChatFilter.Verdict.OK) {
-                sender.sendMessage(messages.get(messageKey(verdict)));
-                return null;
-            }
-        }
-        return messages.get(hand.getAmount() > 1 ? "item-many" : "item",
-                Placeholder.component("item", hand.displayName()),
-                Placeholder.unparsed("amount", String.valueOf(hand.getAmount())));
-    }
-
-    /**
-     * Eşya kutusunda görünen ve oyuncunun yazabildiği metinler: isim, lore, kitap başlığı ve yazarı,
-     * shulker kutusu ve bohça içindeki eşyalar. Hepsi filtreden geçmeli, yoksa reklam hover'a saklanır.
-     */
-    private static List<String> hoverTexts(ItemStack item, int depth) {
-        List<String> texts = new ArrayList<>();
-        if (!item.hasItemMeta()) {
-            return texts;
-        }
-        ItemMeta meta = item.getItemMeta();
-        if (meta.hasCustomName()) {
-            texts.add(plain(meta.customName()));
-        }
-        if (meta.hasItemName()) {
-            texts.add(plain(meta.itemName()));
-        }
-        if (meta.hasLore()) {
-            meta.lore().forEach(line -> texts.add(plain(line)));
-        }
-        if (meta instanceof BookMeta book) {
-            if (book.hasTitle()) {
-                texts.add(plain(book.title()));
-            }
-            if (book.hasAuthor()) {
-                texts.add(plain(book.author()));
-            }
-        }
-        // Bohça içinde bohça olabilir; derinlik sınırı sonsuz döngüye ve ağır eşyalara karşı.
-        if (depth < MAX_ITEM_DEPTH) {
-            if (meta instanceof BundleMeta bundle) {
-                bundle.getItems().forEach(inner -> texts.addAll(hoverTexts(inner, depth + 1)));
-            }
-            if (meta instanceof BlockStateMeta blockMeta && blockMeta.hasBlockState()
-                    && blockMeta.getBlockState() instanceof Container container) {
-                for (ItemStack inner : container.getInventory().getContents()) {
-                    if (inner != null) {
-                        texts.addAll(hoverTexts(inner, depth + 1));
-                    }
-                }
-            }
-        }
-        return texts;
-    }
-
-    private static String plain(Component component) {
-        return component == null ? "" : PlainTextComponentSerializer.plainText().serialize(component);
-    }
-
-    // shortcut: konum async thread'den okunuyor, inRange ile aynı varsayım.
-    private Component sharedLocation(Player sender) {
-        Location location = sender.getLocation();
-        String world = worldNames.getOrDefault(location.getWorld().getName(), location.getWorld().getName());
-        String coordinates = location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ();
-        return messages.get("location",
-                        Placeholder.unparsed("world", world),
-                        Placeholder.unparsed("x", String.valueOf(location.getBlockX())),
-                        Placeholder.unparsed("y", String.valueOf(location.getBlockY())),
-                        Placeholder.unparsed("z", String.valueOf(location.getBlockZ())))
-                .hoverEvent(messages.get("location-hover"))
-                .clickEvent(ClickEvent.copyToClipboard(coordinates));
-    }
-
-    // Mesaj başına sadece ilk [item] ve ilk [konum] değiştirilir, gerisi düz metin kalır (hover spam'ine karşı).
-    private static Component decorate(Component message, Component item, Component location) {
-        return replaceOnce(replaceOnce(message, ChatTokens.ITEM, item), ChatTokens.LOCATION, location);
-    }
-
-    private static Component replaceOnce(Component message, Pattern token, Component replacement) {
-        if (replacement == null) {
-            return message;
-        }
-        return message.replaceText(config -> config.match(token).once().replacement(replacement));
     }
 
     /** config → chat.badges: izni olan ilk rozet. Yoksa boş. */
@@ -345,14 +231,14 @@ public final class ChatListener implements Listener {
         return builder.append(Component.text(text.substring(position))).build();
     }
 
-    /** Ana thread'den çağrılır. Sadece "@isim" ile etiketlenen ve mesajı gören oyunculara ses gider. */
+    /** Ana thread'den çağrılır. Sadece "@isim" ile etiketlenen ve mesajı gören oyunculara bildirim gider. */
     private void notifyMentioned(Player sender, List<Mentions.Span> mentions, Predicate<Player> sawMessage) {
         mentions.stream()
                 .filter(Mentions.Span::explicit)
                 .map(span -> Bukkit.getPlayerExact(span.name()))
                 .filter(player -> player != null && !player.equals(sender) && sawMessage.test(player))
                 .distinct()
-                .forEach(player -> notifications.play(player, Notifications.Type.MENTION));
+                .forEach(player -> notifications.mention(player, sender));
     }
 
     // shortcut: çevrimiçi liste async thread'den okunuyor (Paper'da kopya döner); sorun çıkarsa ana thread'de önbelleğe al.

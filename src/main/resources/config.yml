@@ -45,6 +45,10 @@ chat:
     private-message: "block.note_block.pling"
   # Bu kadar saniye hareketsiz kalan oyuncu AFK sayılır. /afk ile elle de olunur.
   afk-after-seconds: 300
+  # Aynı mesaj bu süre içinde tekrar gönderilemez.
+  duplicate-window-millis: 3000
+  # Etiketlenen oyuncuya ekran yazısı ve ses en fazla bu sıklıkta gider.
+  mention-cooldown-seconds: 10
   # Bu kadar harften uzun ve çoğu büyük harfse mesaj küçültülür.
   caps-min-letters: 6
   caps-ratio: 0.7
@@ -58,8 +62,9 @@ chat:
 
 messages:
   welcome: "<yellow><name></yellow> <gray>sunucuya ilk kez katıldı, hoş geldin!</gray>"
-  cooldown: "<red>Biraz yavaş, tekrar yazmadan önce bekle.</red>"
-  duplicate: "<red>Aynı mesajı tekrar gönderemezsin.</red>"
+  # <seconds>: tekrar yazabilmeye kalan süre.
+  cooldown: "<red>Çok hızlı yazıyorsun, <seconds> saniye bekle.</red>"
+  duplicate: "<red>Aynı mesajı tekrar göndermek için <seconds> saniye bekle.</red>"
   banned-word: "<red>Mesajın uygunsuz kelime içeriyor.</red>"
   advertisement: "<red>Sohbette sunucu adresi ya da bağlantı paylaşamazsın.</red>"
   chat-locked: "<red>Sohbet şu an kilitli.</red>"
@@ -77,12 +82,21 @@ messages:
   # @isim herkese böyle görünür; okuyanın kendi adıysa mention-self kullanılır.
   mention: "<aqua><text></aqua>"
   mention-self: "<yellow><bold><text></bold></yellow>"
+  # Etiketlenince ekranın ortasında çıkan yazı.
+  mention-title: "<yellow><name></yellow>"
+  mention-subtitle: "<gray>senden sohbette bahsetti</gray>"
   # [item] / [eşya]: <item> eşyanın adı (üstüne gelince özellikleri), <amount> adedi.
   item: "<item>"
   item-many: "<item><gray> x<amount></gray>"
   item-empty: "<gray>[boş el]</gray>"
+  # [inv] / [envanter]: tıklayınca envanter salt okunur pencerede açılır. Eşyaya tıklamak da pencere açar.
+  inventory: "<gold>[Envanter: <name>]</gold>"
+  inventory-hover: "<gray>Tıkla: envanteri gör</gray>"
+  view-item-title: "<name> - Eşya"
+  view-inventory-title: "<name> - Envanter"
   # [konum]: tıklayınca "x y z" panoya kopyalanır.
-  location: "<green>[<world> <x>, <y>, <z>]</green>"
+  # <place>: bulunduğu bölgenin adı (regions), bölge yoksa dünya adı. <world> her zaman dünya adı.
+  location: "<green>[<place> <x>, <y>, <z>]</green>"
   location-hover: "<gray>Tıkla: koordinatları kopyala</gray>"
   spy: "<dark_gray>[Spy] <from> → <to>:</dark_gray> <gray><message></gray>"
   spy-on: "<gray>Social spy <green>açık</green>.</gray>"
@@ -92,6 +106,14 @@ messages:
   # Tab listesinde AFK oyuncunun ismi.
   afk-tab: "<dark_gray><name> [AFK]</dark_gray>"
   msg-afk: "<gray><name> şu an AFK, mesajını sonra görebilir.</gray>"
-  sound-on:"<gray><type> sesi <green>açık</green>.</gray>"
+  sound-on: "<gray><type> sesi <green>açık</green>.</gray>"
   sound-off: "<gray><type> sesi <red>kapalı</red>.</gray>"
-  name-hover:"<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"
+  name-hover: "<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"
+
+# İsimli bölgeler: [konum] paylaşımında koordinatla birlikte bölge adı görünür.
+# from/to iki köşenin [x, z] koordinatı, yükseklik fark etmez. İç içe bölgelerde küçük olanı üste yaz.
+regions:
+  - name: "Başlangıç Köyü"
+    world: world
+    from: [-100, -100]
+    to: [100, 100]

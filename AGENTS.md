@@ -12,7 +12,8 @@ Nerede kaldığımız: [docs/NEXT.md](docs/NEXT.md). Sohbet tasarımı: [docs/CH
 
 ## Yapı
 - `RpgPlugin` tek ana sınıf. Her sistem bir `Module` ve `onEnable` içine tek satırla eklenir.
-- Herkes kendi paketinde çalışır: sosyal taraf `com.sunucu.rpg.social`, ortak araçlar `com.sunucu.rpg.core`.
+- Herkes kendi paketinde çalışır: sosyal taraf `com.sunucu.rpg.social`, bölge ve atmosfer `com.sunucu.rpg.world`,
+  ortak araçlar `com.sunucu.rpg.core`.
   Arkadaşın paketlerine (`combat`, `classes`, `quest`, `items` vb.) dokunma.
 - Komutlar `paper-plugin.yml`'e değil, modülün içinde Brigadier ile kaydedilir (`LifecycleEvents.COMMANDS`).
 - İzinler `paper-plugin.yml`'de, `rpg.social.*` önekiyle.

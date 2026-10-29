@@ -17,6 +17,8 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:$paperVersion.build.135-stable")
 
+    // config.yml testi için YamlConfiguration (yeni bağımlılık değil, aynı API test sınıf yolunda).
+    testImplementation("io.papermc.paper:paper-api:$paperVersion.build.135-stable")
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

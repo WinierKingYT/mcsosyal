@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class ChatFilterTest {
 
-    private final ChatFilter filter = new ChatFilter(6, 0.7, List.of("salak", "amk"), List.of("youtube.com"));
+    private final ChatFilter filter = new ChatFilter(3000, 6, 0.7, List.of("salak", "amk"), List.of("youtube.com"));
     private final UUID player = UUID.randomUUID();
 
     @Test
@@ -40,8 +40,15 @@ class ChatFilterTest {
     void enforcesCooldownAndDuplicates() {
         assertEquals(ChatFilter.Verdict.OK, check("global", 2000, "selam", 0));
         assertEquals(ChatFilter.Verdict.COOLDOWN, check("global", 2000, "naber", 1000));
-        assertEquals(ChatFilter.Verdict.DUPLICATE, check("global", 2000, "SELAM!!", 3000));
-        assertEquals(ChatFilter.Verdict.OK, check("global", 2000, "selam", 40_000));
+        assertEquals(ChatFilter.Verdict.DUPLICATE, check("global", 2000, "SELAM!!", 2500));
+        assertEquals(ChatFilter.Verdict.OK, check("global", 2000, "selam", 3000));
+    }
+
+    @Test
+    void reportsRemainingWaitTime() {
+        filter.check(player, "global", 2000, "selam", 0);
+        assertEquals(1500, filter.check(player, "global", 2000, "naber", 500).waitMillis());
+        assertEquals(500, filter.check(player, "global", 2000, "selam", 2500).waitMillis());
     }
 
     @Test

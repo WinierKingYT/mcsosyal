@@ -18,7 +18,8 @@ public final class ChatFilter {
 
     public enum Verdict { OK, COOLDOWN, DUPLICATE, BANNED_WORD, ADVERTISEMENT }
 
-    public record Result(Verdict verdict, String text) {
+    /** waitMillis: COOLDOWN ve DUPLICATE için tekrar yazabilmeye kalan süre, diğerlerinde 0. */
+    public record Result(Verdict verdict, String text, long waitMillis) {
     }
 
     private record Key(UUID sender, String channel) {
@@ -27,7 +28,6 @@ public final class ChatFilter {
     private record Last(long at, String normalized) {
     }
 
-    private static final long DUPLICATE_WINDOW_MILLIS = 30_000;
     private static final Locale TURKISH = Locale.forLanguageTag("tr");
     private static final Pattern IP = Pattern.compile("\\b\\d{1,3}(?:\\s*[.,]\\s*\\d{1,3}){3}\\b");
     // "sunucu.com", "sunucu . net", "sunucu nokta com", "sunucu(dot)gg".
@@ -37,13 +37,16 @@ public final class ChatFilter {
                     + "(com|net|org|tr|me|gg|io|xyz|club|pro|co|eu|online|fun|world)\\b",
             Pattern.CASE_INSENSITIVE);
 
+    private final long duplicateWindowMillis;
     private final int capsMinLetters;
     private final double capsRatio;
     private final Set<String> bannedWords;
     private final Set<String> allowedDomains;
     private final Map<Key, Last> lastMessages = new ConcurrentHashMap<>();
 
-    public ChatFilter(int capsMinLetters, double capsRatio, List<String> bannedWords, List<String> allowedDomains) {
+    public ChatFilter(long duplicateWindowMillis, int capsMinLetters, double capsRatio,
+                      List<String> bannedWords, List<String> allowedDomains) {
+        this.duplicateWindowMillis = duplicateWindowMillis;
         this.capsMinLetters = capsMinLetters;
         this.capsRatio = capsRatio;
         this.bannedWords = bannedWords.stream().map(ChatFilter::normalize).collect(Collectors.toUnmodifiableSet());
@@ -53,6 +56,7 @@ public final class ChatFilter {
 
     public static ChatFilter fromConfig(ConfigurationSection chat) {
         return new ChatFilter(
+                chat.getLong("duplicate-window-millis", 3000),
                 chat.getInt("caps-min-letters", 6),
                 chat.getDouble("caps-ratio", 0.7),
                 chat.getStringList("banned-words"),
@@ -65,18 +69,18 @@ public final class ChatFilter {
         String normalized = normalize(text);
         Last previous = lastMessages.get(key);
         if (previous != null && now - previous.at() < cooldownMillis) {
-            return new Result(Verdict.COOLDOWN, text);
+            return new Result(Verdict.COOLDOWN, text, cooldownMillis - (now - previous.at()));
         }
-        if (previous != null && now - previous.at() < DUPLICATE_WINDOW_MILLIS
+        if (previous != null && now - previous.at() < duplicateWindowMillis
                 && previous.normalized().equals(normalized)) {
-            return new Result(Verdict.DUPLICATE, text);
+            return new Result(Verdict.DUPLICATE, text, duplicateWindowMillis - (now - previous.at()));
         }
         Verdict content = checkContent(text);
         if (content != Verdict.OK) {
-            return new Result(content, text);
+            return new Result(content, text, 0);
         }
         lastMessages.put(key, new Last(now, normalized));
-        return new Result(Verdict.OK, fixCaps(text));
+        return new Result(Verdict.OK, fixCaps(text), 0);
     }
 
     /** Sadece içerik: yasaklı kelime ve reklam. Özel mesajlar da bunu kullanır. */
