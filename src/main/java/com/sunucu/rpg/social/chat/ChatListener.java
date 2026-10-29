@@ -19,6 +19,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -33,6 +34,7 @@ public final class ChatListener implements Listener {
 
     public static final String BYPASS = "rpg.social.chat.bypass";
     private static final long MILLIS_PER_SECOND = 1000;
+    private static final long MILLIS_PER_MINUTE = 60_000;
 
     private final JavaPlugin plugin;
     private final Messages messages;
@@ -42,6 +44,10 @@ public final class ChatListener implements Listener {
     private final Showcase showcase;
     private final ChannelPreferences preferences;
     private final PlayerCard card;
+    private final ChatMutes mutes;
+    private final int spamWarnAfter;
+    private final int spamMuteAfter;
+    private final long spamMuteMillis;
     private final String format;
     private final String localPrefix;
     private final Map<String, ChatChannel> channels = new LinkedHashMap<>();
@@ -52,7 +58,7 @@ public final class ChatListener implements Listener {
 
     public ChatListener(JavaPlugin plugin, ConfigurationSection chat, Messages messages, ChatFilter filter,
                         PrivateMessages privateMessages, Notifications notifications, Showcase showcase,
-                        ChannelPreferences preferences, PlayerCard card) {
+                        ChannelPreferences preferences, PlayerCard card, ChatMutes mutes) {
         this.plugin = plugin;
         this.messages = messages;
         this.filter = filter;
@@ -61,6 +67,10 @@ public final class ChatListener implements Listener {
         this.showcase = showcase;
         this.preferences = preferences;
         this.card = card;
+        this.mutes = mutes;
+        this.spamWarnAfter = chat.getInt("spam.warn-after", 5);
+        this.spamMuteAfter = chat.getInt("spam.mute-after", 10);
+        this.spamMuteMillis = chat.getLong("spam.mute-minutes", 5) * MILLIS_PER_MINUTE;
         this.format = chat.getString("format", "<name>: <message>");
         this.localPrefix = chat.getString("local-prefix", "!");
         ConfigurationSection section = chat.getConfigurationSection("channels");
@@ -210,16 +220,46 @@ public final class ChatListener implements Listener {
         if (bypass) {
             return text;
         }
+        long now = System.currentTimeMillis();
+        if (isMuted(sender, now)) {
+            return null;
+        }
         ChatFilter.Result result = filter.check(sender.getUniqueId(), channel.key(), channel.cooldownMillis(),
-                text, System.currentTimeMillis());
-        if (result.verdict() != ChatFilter.Verdict.OK) {
+                text, now);
+        if (result.verdict() == ChatFilter.Verdict.OK) {
+            return result.text();
+        }
+        // Bekleme/tekrar denemeleri sayılır: önce normal uyarı, sonra farklı renkte sert uyarı, en sonda susturma.
+        if (result.strikes() >= spamMuteAfter) {
+            mutes.mute(sender.getUniqueId(), now + spamMuteMillis);
+            filter.clearStrikes(sender.getUniqueId());
+            sender.sendMessage(messages.get("spam-muted", minutes(spamMuteMillis)));
+            plugin.getLogger().info(sender.getName() + " spam yüzünden " + spamMuteMillis / MILLIS_PER_MINUTE
+                    + " dakika susturuldu");
+        } else if (result.strikes() >= spamWarnAfter) {
+            sender.sendMessage(messages.get("spam-warning",
+                    Placeholder.unparsed("left", String.valueOf(spamMuteAfter - result.strikes()))));
+        } else {
             // Yukarı yuvarla: 0,4 saniye kaldıysa "1 saniye bekle" yazsın, "0" değil.
             long seconds = (result.waitMillis() + MILLIS_PER_SECOND - 1) / MILLIS_PER_SECOND;
             sender.sendMessage(messages.get(messageKey(result.verdict()),
                     Placeholder.unparsed("seconds", String.valueOf(seconds))));
-            return null;
         }
-        return result.text();
+        return null;
+    }
+
+    /** Susturulmuşsa oyuncuya kalan süreyi söyler. */
+    private boolean isMuted(Player sender, long now) {
+        long remaining = mutes.remainingMillis(sender.getUniqueId(), now);
+        if (remaining <= 0) {
+            return false;
+        }
+        sender.sendMessage(messages.get("muted", minutes(remaining)));
+        return true;
+    }
+
+    static TagResolver minutes(long millis) {
+        return Placeholder.unparsed("minutes", String.valueOf((millis + MILLIS_PER_MINUTE - 1) / MILLIS_PER_MINUTE));
     }
 
     static String messageKey(ChatFilter.Verdict verdict) {

@@ -2,12 +2,14 @@ package com.sunucu.rpg.social.chat;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,8 +20,11 @@ public final class ChatFilter {
 
     public enum Verdict { OK, COOLDOWN, DUPLICATE, BANNED_WORD, ADVERTISEMENT }
 
-    /** waitMillis: COOLDOWN ve DUPLICATE için tekrar yazabilmeye kalan süre, diğerlerinde 0. */
-    public record Result(Verdict verdict, String text, long waitMillis) {
+    /**
+     * waitMillis: COOLDOWN ve DUPLICATE için tekrar yazabilmeye kalan süre, diğerlerinde 0.
+     * strikes: son spam penceresi içinde bekleme/tekrar yüzünden engellenen deneme sayısı (uyarı ve susturma için).
+     */
+    public record Result(Verdict verdict, String text, long waitMillis, int strikes) {
     }
 
     private record Key(UUID sender, String channel) {
@@ -38,15 +43,18 @@ public final class ChatFilter {
             Pattern.CASE_INSENSITIVE);
 
     private final long duplicateWindowMillis;
+    private final long spamWindowMillis;
     private final int capsMinLetters;
     private final double capsRatio;
     private final Set<String> bannedWords;
     private final Set<String> allowedDomains;
     private final Map<Key, Last> lastMessages = new ConcurrentHashMap<>();
+    private final Map<UUID, Deque<Long>> strikes = new ConcurrentHashMap<>();
 
-    public ChatFilter(long duplicateWindowMillis, int capsMinLetters, double capsRatio,
+    public ChatFilter(long duplicateWindowMillis, long spamWindowMillis, int capsMinLetters, double capsRatio,
                       List<String> bannedWords, List<String> allowedDomains) {
         this.duplicateWindowMillis = duplicateWindowMillis;
+        this.spamWindowMillis = spamWindowMillis;
         this.capsMinLetters = capsMinLetters;
         this.capsRatio = capsRatio;
         this.bannedWords = bannedWords.stream().map(ChatFilter::normalize).collect(Collectors.toUnmodifiableSet());
@@ -57,6 +65,7 @@ public final class ChatFilter {
     public static ChatFilter fromConfig(ConfigurationSection chat) {
         return new ChatFilter(
                 chat.getLong("duplicate-window-millis", 3000),
+                chat.getLong("spam.window-seconds", 60) * 1000,
                 chat.getInt("caps-min-letters", 6),
                 chat.getDouble("caps-ratio", 0.7),
                 chat.getStringList("banned-words"),
@@ -69,18 +78,34 @@ public final class ChatFilter {
         String normalized = normalize(text);
         Last previous = lastMessages.get(key);
         if (previous != null && now - previous.at() < cooldownMillis) {
-            return new Result(Verdict.COOLDOWN, text, cooldownMillis - (now - previous.at()));
+            return new Result(Verdict.COOLDOWN, text, cooldownMillis - (now - previous.at()), strike(sender, now));
         }
         if (previous != null && now - previous.at() < duplicateWindowMillis
                 && previous.normalized().equals(normalized)) {
-            return new Result(Verdict.DUPLICATE, text, duplicateWindowMillis - (now - previous.at()));
+            return new Result(Verdict.DUPLICATE, text, duplicateWindowMillis - (now - previous.at()),
+                    strike(sender, now));
         }
         Verdict content = checkContent(text);
         if (content != Verdict.OK) {
-            return new Result(content, text, 0);
+            return new Result(content, text, 0, 0);
         }
         lastMessages.put(key, new Last(now, normalized));
-        return new Result(Verdict.OK, fixCaps(text), 0);
+        return new Result(Verdict.OK, fixCaps(text), 0, 0);
+    }
+
+    /** Engellenen denemeyi sayar; pencereden eski denemeler düşer. */
+    private int strike(UUID sender, long now) {
+        Deque<Long> times = strikes.computeIfAbsent(sender, id -> new ConcurrentLinkedDeque<>());
+        times.addLast(now);
+        while (!times.isEmpty() && now - times.peekFirst() > spamWindowMillis) {
+            times.pollFirst();
+        }
+        return times.size();
+    }
+
+    /** Susturulunca sayaç sıfırlanır; susturma bitince oyuncu temiz başlar. */
+    public void clearStrikes(UUID sender) {
+        strikes.remove(sender);
     }
 
     /** Sadece içerik: yasaklı kelime ve reklam. Özel mesajlar da bunu kullanır. */

@@ -37,6 +37,11 @@
   `core.gui` (Menu, MenuListener, Icons). Oyuncu kartı: `chat.player-card` + `StatsProvider`. Envanter penceresi
   5 sıra (çanta, hızlı çubuk, altta zırh + ikinci el, gri cam), eşya penceresi 3x3. `rpg.social.inventory.edit`
   ile yetkili gerçek envanteri açıp düzenler. Testler 28/28. Oyunda denenmedi.
+- 2026-10-29: Oyun testi: /sosyal çalışıyor. Geri bildirim: yetkili de aynı [inv] düzenini görüyor
+  (`LiveInventoryView`: canlı, sadece dokunulan yuvalar yazılır, camlar kilitli; düzen `InventoryLayout`'ta ortak),
+  panel eşyalarına açıklamalar (kanal `description`), ticaret bekleme 3 sn, spam yükseltmesi (uyarı → 5 dk
+  susturma, `ChatMutes`, `/chat unmute`). Paylaşılan envanter bilerek o anın kopyası. 3x3 en küçük 9'luk pencere,
+  altındaki oyuncu envanteri gizlenemez. Testler 35/35. Oyunda denenmedi.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -62,7 +67,8 @@
 ## Oyunda doğrulanacak
 - [ ] Örs ismi `site.com` olan eşya op değilken `[i]` ile engelleniyor mu
 - [ ] Eşyaya ve `[inv]`'e tıklayınca pencere açılıyor, içinden eşya alınamıyor mu (shift-click dahil)
-- [ ] Op olarak başkasının `[inv]`'ine tıklayınca gerçek envanter açılıyor ve düzenleme oyuncuya yansıyor mu
+- [ ] Op olarak başkasının `[inv]`'i: aynı düzen, camlar ellenemiyor, değişiklik oyuncuya yansıyor, eşya kaybolmuyor
+- [ ] Spam: 5. engellenen denemede turuncu uyarı, 10.'da 5 dk susturma; `/chat unmute`
 - [ ] `/sosyal`: kanal seçince normal sohbet o kanala gidiyor mu, gizlenen kanal görünmüyor mu
 - [ ] Vanilla `/me` ve `/teammsg` filtreyi atlatıyor; kapatılmalı mı karar ver
 - [ ] Etiketlenince ekran yazısı, 10 sn içinde ikinci etikette tekrar çıkmıyor mu

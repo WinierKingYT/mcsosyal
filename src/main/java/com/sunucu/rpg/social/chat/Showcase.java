@@ -1,12 +1,10 @@
 package com.sunucu.rpg.social.chat;
 
 import com.sunucu.rpg.core.Messages;
-import com.sunucu.rpg.core.gui.Icons;
 import com.sunucu.rpg.core.gui.Menu;
 import com.sunucu.rpg.world.Regions;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +17,6 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Container;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -30,6 +27,7 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.BundleMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Sohbette [i], [inv] ve [konum] paylaşımları. Eşya ve envantere tıklayınca salt okunur bir pencere açılır;
@@ -53,24 +51,18 @@ public final class Showcase {
 
     private static final int MAX_ITEM_DEPTH = 2;
     private static final Duration VIEW_LIFETIME = Duration.ofMinutes(10);
-    // Eşya: 3x3 pencere, ortada. Envanter: 3 sıra çanta, 1 sıra hızlı çubuk, en altta ortalanmış
-    // kask, göğüslük, pantolon, ayakkabı, ikinci el; kalan 4 yuva dolgu camı.
+    // Eşya: 3x3 pencere (Minecraft'taki en küçük 9 yuvalı pencere), eşya ortada. Envanter düzeni InventoryLayout'ta.
     private static final int ITEM_VIEW_SLOT = 4;
-    private static final int INVENTORY_VIEW_ROWS = 5;
-    private static final int INVENTORY_VIEW_SIZE = INVENTORY_VIEW_ROWS * 9;
-    private static final int HOTBAR_SIZE = 9;
-    private static final int HOTBAR_VIEW_START = 27;
-    private static final int BOTTOM_ROW_START = 36;
-    private static final int ARMOR_VIEW_START = 38;
-    private static final int OFFHAND_VIEW_SLOT = 42;
-    private static final String[] ARMOR_NAMES = {"Kask", "Göğüslük", "Pantolon", "Ayakkabı"};
 
+    private final JavaPlugin plugin;
     private final Messages messages;
     private final ChatFilter filter;
     private final Regions regions;
     private final Map<String, String> worldNames = new HashMap<>();
 
-    public Showcase(ConfigurationSection chat, Messages messages, ChatFilter filter, Regions regions) {
+    public Showcase(JavaPlugin plugin, ConfigurationSection chat, Messages messages, ChatFilter filter,
+                    Regions regions) {
+        this.plugin = plugin;
         this.messages = messages;
         this.filter = filter;
         this.regions = regions;
@@ -98,14 +90,11 @@ public final class Showcase {
         }
         if (ChatTokens.has(ChatTokens.INVENTORY, text)) {
             PlayerInventory live = sender.getInventory();
-            // Boş yuvalar null; List.of null kabul etmez.
-            List<ItemStack> contents = new ArrayList<>(Arrays.asList(live.getStorageContents()));
-            contents.addAll(Arrays.asList(live.getArmorContents()));
-            contents.add(live.getItemInOffHand());
-            if (!passesFilter(sender, contents)) {
+            if (!passesFilter(sender, InventoryLayout.contents(live))) {
                 return null;
             }
-            inventory = inventoryComponent(sender, inventoryLayout(live));
+            // Pencere paylaşım anını gösterir: sonradan çantaya konan eşya filtreden geçmemiş olurdu.
+            inventory = inventoryComponent(sender, InventoryLayout.render(live, messages, null));
         }
         Component location = ChatTokens.has(ChatTokens.LOCATION, text) ? locationComponent(sender) : null;
         return new Shared(item, inventory, location);
@@ -137,10 +126,11 @@ public final class Showcase {
             // İzin tıklama anında kontrol edilir: bağlantıya kim tıklarsa onun yetkisi geçerli.
             Player owner = Bukkit.getPlayer(ownerId);
             if (owner != null && !owner.equals(viewer) && viewer.hasPermission(EDIT_INVENTORY)) {
-                viewer.openInventory(owner.getInventory());
+                LiveInventoryView.open(plugin, viewer, owner, messages,
+                        messages.get("view-inventory-edit-title", Placeholder.unparsed("name", owner.getName())));
                 return;
             }
-            Menu menu = new Menu(INVENTORY_VIEW_ROWS, title);
+            Menu menu = new Menu(InventoryLayout.ROWS, title);
             for (int slot = 0; slot < layout.length; slot++) {
                 if (layout[slot] != null) {
                     menu.set(slot, layout[slot].clone());
@@ -151,34 +141,6 @@ public final class Showcase {
         return messages.get("inventory", Placeholder.unparsed("name", sender.getName()))
                 .hoverEvent(messages.get("inventory-hover"))
                 .clickEvent(open);
-    }
-
-    /** Paylaşım anının kopyası, pencere düzeninde. Boş zırh yuvasında gri cam, kalan yuvalarda dolgu camı. */
-    private ItemStack[] inventoryLayout(PlayerInventory inventory) {
-        ItemStack[] layout = new ItemStack[INVENTORY_VIEW_SIZE];
-        ItemStack[] storage = inventory.getStorageContents();
-        for (int slot = 0; slot < storage.length; slot++) {
-            int viewSlot = slot < HOTBAR_SIZE ? HOTBAR_VIEW_START + slot : slot - HOTBAR_SIZE;
-            layout[viewSlot] = copy(storage[slot]);
-        }
-        ItemStack filler = Icons.icon(Material.BLACK_STAINED_GLASS_PANE, Component.empty(), List.of());
-        for (int slot = BOTTOM_ROW_START; slot < INVENTORY_VIEW_SIZE; slot++) {
-            layout[slot] = filler;
-        }
-        // getArmorContents: ayakkabı, pantolon, göğüslük, kask. Pencerede kasktan başlar.
-        ItemStack[] armor = inventory.getArmorContents();
-        for (int i = 0; i < ARMOR_NAMES.length; i++) {
-            ItemStack piece = copy(armor[armor.length - 1 - i]);
-            layout[ARMOR_VIEW_START + i] = piece != null ? piece : Icons.icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE,
-                    messages.get("view-empty-armor", Placeholder.unparsed("slot", ARMOR_NAMES[i])), List.of());
-        }
-        // Elinde bir şey yoksa yuva boş kalır.
-        layout[OFFHAND_VIEW_SLOT] = copy(inventory.getItemInOffHand());
-        return layout;
-    }
-
-    private static ItemStack copy(ItemStack item) {
-        return item == null || item.isEmpty() ? null : item.clone();
     }
 
     private Component locationComponent(Player sender) {

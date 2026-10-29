@@ -66,7 +66,11 @@ public final class SocialMenu {
             ChatChannel channel = channels.get(i);
             boolean isActive = channel.key().equals(active);
             boolean hidden = preferences.isHidden(player.getUniqueId(), channel.key());
-            List<Component> lore = new ArrayList<>(messages.lines(isActive ? "channel-active" : "channel-select"));
+            List<Component> lore = new ArrayList<>(channel.description());
+            if (!lore.isEmpty()) {
+                lore.add(Component.empty());
+            }
+            lore.addAll(messages.lines(isActive ? "channel-active" : "channel-select"));
             lore.addAll(messages.lines(hidden ? "channel-hidden" : "channel-visible"));
             menu.button(FIRST_CHANNEL_SLOT + i, Icons.icon(channel.icon(), channel.name(), lore, isActive),
                     click -> onChannelClick(menu, player, channel, click));
@@ -98,9 +102,11 @@ public final class SocialMenu {
 
     private void fillNotifications(Menu menu, Player player) {
         menu.button(MENTION_SLOT, toggleIcon(player, Notifications.Type.MENTION, Material.NAME_TAG,
-                "notify-mention"), click -> toggle(menu, player, Notifications.Type.MENTION));
+                        messages.get("notify-mention"), messages.lines("notify-mention-lore")),
+                click -> toggle(menu, player, Notifications.Type.MENTION));
         menu.button(PRIVATE_MESSAGE_SLOT, toggleIcon(player, Notifications.Type.PRIVATE_MESSAGE, Material.PAPER,
-                "notify-private-message"), click -> toggle(menu, player, Notifications.Type.PRIVATE_MESSAGE));
+                        messages.get("notify-private-message"), messages.lines("notify-private-message-lore")),
+                click -> toggle(menu, player, Notifications.Type.PRIVATE_MESSAGE));
         menu.button(BACK_SLOT, back(), click -> openMain(player));
     }
 
@@ -109,14 +115,17 @@ public final class SocialMenu {
         fillNotifications(menu, player);
     }
 
-    private ItemStack toggleIcon(Player player, Notifications.Type type, Material material,
-                                                      String nameKey) {
+    /** Açıklama, boş satır, sonra açık/kapalı durumu. Açıkken parlar. */
+    private ItemStack toggleIcon(Player player, Notifications.Type type, Material material, Component name,
+                                 List<Component> description) {
         boolean enabled = notifications.isEnabled(player, type);
-        return Icons.icon(material, messages.get(nameKey),
-                messages.lines(enabled ? "notify-on" : "notify-off"), enabled);
+        List<Component> lore = new ArrayList<>(description);
+        lore.add(Component.empty());
+        lore.addAll(messages.lines(enabled ? "notify-on" : "notify-off"));
+        return Icons.icon(material, name, lore, enabled);
     }
 
     private ItemStack back() {
-        return Icons.icon(Material.ARROW, messages.get("menu-back"), List.of());
+        return Icons.icon(Material.ARROW, messages.get("menu-back"), messages.lines("menu-back-lore"));
     }
 }

@@ -14,7 +14,7 @@
   |---|---|---|---|
   | Global | Herkes | varsayılan | 2 sn |
   | Yerel | 64 blok | `!` öneki (hangi kanal seçiliyse) | 2 sn |
-  | Ticaret | Herkes | panel | 45 sn |
+  | Ticaret | Herkes | panel | 3 sn |
   | Yardım | Herkes | panel | 2 sn |
   | Parti / Lonca | Üyeler | panel (parti/lonca gelince) | — |
   | Yetkili | Moderatörler | panel, `/sc` | — |
@@ -26,7 +26,9 @@
 - **Eşya gösterme:** `[i]` / `[item]` / `[eşya]` → elindeki eşya, üstüne gelince özellikleri, tıklayınca 3x3 pencere.
 - **Envanter gösterme:** `[inv]` / `[envanter]` → tıklayınca 5 sıralık salt okunur pencere: 3 sıra çanta,
   1 sıra hızlı çubuk, en altta kask, göğüslük, pantolon, ayakkabı, ikinci el (boş zırh yuvasında gri cam).
-  `rpg.social.inventory.edit` izni olan yetkili tıklarsa oyuncunun gerçek envanteri canlı ve düzenlenebilir açılır.
+  Pencere paylaşım anını gösterir (o anki eşyalar filtreden geçti; sonradan konan eşya geçmemiş olur).
+  `rpg.social.inventory.edit` izni olan yetkili aynı düzeni görür ama canlı: değişiklik oyuncunun gerçek
+  envanterine yazılır, camlara kimse dokunamaz, gri cama eşyayla tıklamak o eşyayı giydirir.
 - **Etiketleme:** `@isim` (ses + vurgu + ekran yazısı, 10 sn bekleme), `@parti`.
 - **Konum paylaşma:** `[konum]` → koordinat ve bölge adı (`regions`), tıklayınca kopyalanır.
 - **İsim vurgusu:** biri adını yazarsa mesaj vurgulu görünür.
@@ -36,6 +38,8 @@
 
 ## Moderasyon
 - Spam (bekleme süresi, 3 sn içinde tekrar), büyük harf küçültme, küfür ve reklam filtresi.
+- Spam yükseltmesi: 60 sn içinde 5 engellenen denemede turuncu uyarı, 10'da 5 dk otomatik susturma
+  (`chat.spam`). Yetkili `/chat unmute <oyuncu>` ile kaldırır.
 - `/chat clear`, `/chat lock`, tek mesaj silme.
 - Mute entegrasyonu (kalan süre gösterilir), gizli susturma (shadow mute).
 - Yeni hesap kısıtlaması: ilk 10–15 dk global kanala yazamaz ve bağlantı paylaşamaz (oynama süresine bağlı).

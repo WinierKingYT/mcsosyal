@@ -29,6 +29,13 @@ public final class Icons {
         return item;
     }
 
+    /** Sadece boşluk doldurur: üstüne gelince hiçbir yazı göstermez. */
+    public static ItemStack filler(Material material) {
+        ItemStack item = ItemStack.of(material);
+        item.editMeta(meta -> meta.setHideTooltip(true));
+        return item;
+    }
+
     private static Component plain(Component text) {
         return text.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }

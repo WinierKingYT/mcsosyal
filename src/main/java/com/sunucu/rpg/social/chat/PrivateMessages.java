@@ -20,17 +20,20 @@ public final class PrivateMessages {
     private final ChatFilter filter;
     private final Notifications notifications;
     private final AfkTracker afk;
+    private final ChatMutes mutes;
     // shortcut: spy listesi bellekte, yeniden başlatınca kapanır (güvenli varsayılan).
     private final Set<UUID> spies = ConcurrentHashMap.newKeySet();
     // shortcut: engellemeler bellekte, yeniden başlatınca silinir; veritabanı katmanı gelince kalıcı yap.
     private final Map<UUID, Set<UUID>> ignores = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> lastPartner = new ConcurrentHashMap<>();
 
-    public PrivateMessages(Messages messages, ChatFilter filter, Notifications notifications, AfkTracker afk) {
+    public PrivateMessages(Messages messages, ChatFilter filter, Notifications notifications, AfkTracker afk,
+                           ChatMutes mutes) {
         this.messages = messages;
         this.filter = filter;
         this.notifications = notifications;
         this.afk = afk;
+        this.mutes = mutes;
     }
 
     public boolean isIgnoring(Player who, Player target) {
@@ -48,6 +51,11 @@ public final class PrivateMessages {
     }
 
     public void send(Player from, Player to, String text) {
+        long muted = mutes.remainingMillis(from.getUniqueId(), System.currentTimeMillis());
+        if (muted > 0 && !from.hasPermission(ChatListener.BYPASS)) {
+            from.sendMessage(messages.get("muted", ChatListener.minutes(muted)));
+            return;
+        }
         if (from.equals(to)) {
             from.sendMessage(messages.get("msg-self"));
             return;

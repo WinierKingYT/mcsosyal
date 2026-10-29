@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class ChatFilterTest {
 
-    private final ChatFilter filter = new ChatFilter(3000, 6, 0.7, List.of("salak", "amk"), List.of("youtube.com"));
+    private final ChatFilter filter = new ChatFilter(3000, 60_000, 6, 0.7, List.of("salak", "amk"), List.of("youtube.com"));
     private final UUID player = UUID.randomUUID();
 
     @Test
@@ -49,6 +49,19 @@ class ChatFilterTest {
         filter.check(player, "global", 2000, "selam", 0);
         assertEquals(1500, filter.check(player, "global", 2000, "naber", 500).waitMillis());
         assertEquals(500, filter.check(player, "global", 2000, "selam", 2500).waitMillis());
+    }
+
+    @Test
+    void countsBlockedAttemptsInSpamWindow() {
+        check("global", 2000, "selam", 0);
+        assertEquals(1, filter.check(player, "global", 2000, "a", 100).strikes());
+        assertEquals(2, filter.check(player, "global", 2000, "b", 200).strikes());
+        assertEquals(3, filter.check(player, "global", 2000, "selam", 2100).strikes());
+        // Pencere 60 sn: son denemeden (2,1 sn) 60 sn sonra hepsi düşer.
+        check("global", 2000, "yeni", 63_000);
+        assertEquals(1, filter.check(player, "global", 2000, "x", 63_100).strikes());
+        filter.clearStrikes(player);
+        assertEquals(1, filter.check(player, "global", 2000, "y", 63_200).strikes());
     }
 
     @Test

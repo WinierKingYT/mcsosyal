@@ -18,33 +18,39 @@ chat:
     world_nether: "Nether"
     world_the_end: "End"
   # Oyuncu yazacağı kanalı /sosyal → Sohbet Kanalları'ndan seçer (sağ tık: kanalı gizle). Yetkililer /sc ile de yazar.
-  # name ve icon panelde, tag sohbet satırında görünür. icon bir Minecraft eşya adıdır (ör. BELL, EMERALD).
+  # name, icon ve description panelde, tag sohbet satırında görünür. icon bir Minecraft eşya adıdır (ör. BELL).
+  # description'da satırlar \n ile ayrılır.
   # Bekleme süresi kanal başınadır. permission verilen kanalı sadece o izne sahip olanlar görür ve yazar.
   channels:
     global:
       name: "<gold>Global</gold>"
       icon: BELL
+      description: "<gray>Sunucudaki herkes görür."
       tag: "<gold>G</gold>"
       cooldown-millis: 2000
     local:
       name: "<green>Yerel</green>"
       icon: OAK_SAPLING
+      description: "<gray>Sadece 64 blok içindekiler görür.\n<gray>Kısayol: mesajın başına <white>!</white> koy (ör. <white>!selam</white>)"
       tag: "<green>Y</green>"
       cooldown-millis: 2000
       radius: 64
     trade:
       name: "<aqua>Ticaret</aqua>"
       icon: EMERALD
+      description: "<gray>Alım satım için. Herkes görür."
       tag: "<aqua>T</aqua>"
-      cooldown-millis: 45000
+      cooldown-millis: 3000
     help:
       name: "<yellow>Yardım</yellow>"
       icon: BOOK
+      description: "<gray>Soru sor, <green>Rehber</green><gray>ler yanıtlasın."
       tag: "<yellow>?</yellow>"
       cooldown-millis: 2000
     staff:
       name: "<red>Yetkili</red>"
       icon: REDSTONE
+      description: "<gray>Sadece yetkililer görür.\n<gray>Kısayol: <white>/sc mesaj</white>"
       tag: "<red>Yetkili</red>"
       cooldown-millis: 0
       permission: rpg.social.chat.staff
@@ -67,6 +73,13 @@ chat:
   afk-after-seconds: 300
   # Aynı mesaj bu süre içinde tekrar gönderilemez.
   duplicate-window-millis: 3000
+  # Bekleme/tekrar yüzünden engellenen denemeler window-seconds içinde sayılır: warn-after denemede sert uyarı,
+  # mute-after denemede mute-minutes dakika susturma. Yetkili /chat unmute <oyuncu> ile kaldırır.
+  spam:
+    window-seconds: 60
+    warn-after: 5
+    mute-after: 10
+    mute-minutes: 5
   # Etiketlenen oyuncuya ekran yazısı ve ses en fazla bu sıklıkta gider.
   mention-cooldown-seconds: 10
   # Bu kadar harften uzun ve çoğu büyük harfse mesaj küçültülür.
@@ -88,6 +101,11 @@ messages:
   banned-word: "<red>Mesajın uygunsuz kelime içeriyor.</red>"
   advertisement: "<red>Sohbette sunucu adresi ya da bağlantı paylaşamazsın.</red>"
   chat-locked: "<red>Sohbet şu an kilitli.</red>"
+  spam-warning: "<gold>⚠ Spam yapma! <left> deneme daha yaparsan sohbetten susturulacaksın.</gold>"
+  spam-muted: "<red>Spam yüzünden <minutes> dakika susturuldun.</red>"
+  muted: "<red>Susturuldun, <minutes> dakika kaldı.</red>"
+  unmuted: "<green><name> artık konuşabilir.</green>"
+  not-muted: "<gray><name> susturulmamış.</gray>"
   message-error: "<red>Mesajın gönderilemedi, bir hata oluştu. Yetkililere bildir.</red>"
   lock-on: "<yellow>Sohbet <name> tarafından kilitlendi.</yellow>"
   lock-off: "<green>Sohbet kilidi <name> tarafından açıldı.</green>"
@@ -116,6 +134,8 @@ messages:
   view-item-title: "<name> - Eşya"
   view-inventory-title: "<name> - Envanter"
   view-empty-armor: "<gray><slot> yok</gray>"
+  view-empty-armor-lore: "<dark_gray>Bu yuva boş."
+  view-inventory-edit-title: "<name> - Envanter (düzenle)"
   # [konum]: tıklayınca "x y z" panoya kopyalanır.
   # <place>: bulunduğu bölgenin adı (regions), bölge yoksa dünya adı. <world> her zaman dünya adı.
   location: "<green>[<place> <x>, <y>, <z>]</green>"
@@ -135,6 +155,7 @@ messages:
   # /sosyal paneli. Çok satırlı açıklamalarda satırlar \n ile ayrılır.
   menu-title: "Sosyal"
   menu-back: "<gray>Geri</gray>"
+  menu-back-lore: "<dark_gray>Ana panele dön."
   menu-channels: "<gold>Sohbet Kanalları</gold>"
   menu-channels-lore: "<gray>Hangi kanala yazacağını seç,\n<gray>istemediğin kanalları gizle."
   menu-notifications: "<yellow>Bildirimler</yellow>"
@@ -150,7 +171,9 @@ messages:
   channel-cannot-hide-active: "<red>Yazdığın kanalı gizleyemezsin, önce başka bir kanal seç.</red>"
   notifications-title: "Bildirimler"
   notify-mention: "<yellow>Etiketlenince</yellow>"
+  notify-mention-lore: "<gray>Biri seni <white>@isim</white><gray> ile etiketleyince\n<gray>ses ve ekranda yazı."
   notify-private-message: "<light_purple>Özel mesaj gelince</light_purple>"
+  notify-private-message-lore: "<gray>Sana <white>/msg</white><gray> gelince ses."
   notify-on: "<green>Açık</green>\n<gray>Tıkla: kapat</gray>"
   notify-off: "<red>Kapalı</red>\n<gray>Tıkla: aç</gray>"
 

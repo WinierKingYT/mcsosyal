@@ -6,6 +6,8 @@ import com.sunucu.rpg.social.chat.ChannelPreferences;
 import com.sunucu.rpg.social.chat.ChatCommands;
 import com.sunucu.rpg.social.chat.ChatFilter;
 import com.sunucu.rpg.social.chat.ChatListener;
+import com.sunucu.rpg.social.chat.ChatMutes;
+import com.sunucu.rpg.social.chat.LiveInventoryView;
 import com.sunucu.rpg.social.chat.Notifications;
 import com.sunucu.rpg.social.chat.PlayerCard;
 import com.sunucu.rpg.social.chat.PrivateMessages;
@@ -35,20 +37,22 @@ public final class SocialModule implements Module {
         Notifications notifications = new Notifications(config.getConfigurationSection("sounds"), messages,
                 config.getLong("mention-cooldown-seconds", 10));
         AfkTracker afk = new AfkTracker(messages, config.getLong("afk-after-seconds", 300));
-        PrivateMessages privateMessages = new PrivateMessages(messages, filter, notifications, afk);
+        ChatMutes mutes = new ChatMutes();
+        PrivateMessages privateMessages = new PrivateMessages(messages, filter, notifications, afk, mutes);
         // shortcut: bölgeler şimdilik sadece [konum] için burada yükleniyor; bölge giriş mesajları gelince world modülüne taşı.
         Regions regions = Regions.fromConfig(plugin.getConfig().getMapList("regions"), plugin.getLogger()::warning);
-        Showcase showcase = new Showcase(config, messages, filter, regions);
+        Showcase showcase = new Showcase(plugin, config, messages, filter, regions);
         ChannelPreferences preferences = new ChannelPreferences();
         PlayerCard card = new PlayerCard(config.getMapList("player-card"), messages);
         chat = new ChatListener(plugin, config, messages, filter, privateMessages, notifications, showcase,
-                preferences, card);
+                preferences, card, mutes);
         SocialMenu menu = new SocialMenu(messages, chat, preferences, notifications);
 
         plugin.getServer().getPluginManager().registerEvents(chat, plugin);
         plugin.getServer().getPluginManager().registerEvents(afk, plugin);
+        plugin.getServer().getPluginManager().registerEvents(new LiveInventoryView.Protection(plugin), plugin);
         afk.start(plugin);
-        ChatCommands.register(plugin, chat, privateMessages, afk, menu, messages);
+        ChatCommands.register(plugin, chat, privateMessages, afk, menu, mutes, messages);
     }
 
     public void setTagProvider(TagProvider provider) {
