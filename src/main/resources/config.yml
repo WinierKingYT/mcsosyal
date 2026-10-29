@@ -214,6 +214,18 @@ messages:
   friend-not-friends: "<red><name> arkadaşın değil.</red>"
   friend-unknown: "<red>Listende <name> diye biri yok.</red>"
   # Oyuncu profili (/profil, sohbette isme tıklayınca).
+  # Sohbette mesajın üstüne gelince. <time> saat:dakika (sunucunun saati).
+  message-time: "<gray>Gönderildi: <white><time></white>"
+  # /oyuncular: önce çevrimiçiler, sonra son 7 günde çıkanlar (yeni çıkan önce).
+  players-title: "Oyuncular (<online> çevrimiçi)"
+  players-info: "<gold>Oyuncular</gold>"
+  players-info-lore: "<gray>Çevrimiçi: <white><online></white>\n<gray>Sayfa: <white><page>/<pages></white>\n<dark_gray>Önce çevrimiçiler, sonra\n<dark_gray>en son çıkanlar."
+  players-previous: "<gray>Önceki sayfa"
+  players-next: "<gray>Sonraki sayfa"
+  players-place: "<gray>Yer: <white><place></white>"
+  players-afk: "<yellow>AFK</yellow>"
+  players-party: "<gray>Parti: <party>"
+  players-last-seen: "<gray>Son görülme: <white><ago> önce</white>"
   profile-title: "<name> - Profil"
   profile-head: "<yellow><name></yellow>"
   profile-own: "<dark_gray>Bu senin profilin."

@@ -9,6 +9,9 @@ import com.sunucu.rpg.social.profile.ProfileMenu;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -47,6 +50,8 @@ public final class ChatListener implements Listener {
     /** Sohbette mesajın yanında [x]: tıklayınca mesaj herkesin ekranından silinir. */
     public static final String DELETE = "rpg.moderation.delete";
     private static final Duration DELETE_LIFETIME = Duration.ofMinutes(10);
+    // shortcut: sunucunun saat dilimi; oyuncular farklı ülkelerdeyse saati oyuncuya göre göster.
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault());
     private static final long MILLIS_PER_SECOND = 1000;
     private static final long MILLIS_PER_MINUTE = 60_000;
 
@@ -450,10 +455,16 @@ public final class ChatListener implements Listener {
         return names;
     }
 
-    /** Gizli susturulanın mesajı yetkiliye (ve konsola) [Gizli] etiketiyle görünür; gönderen etiketi görmez. */
+    /**
+     * Gizli susturulanın mesajı yetkiliye (ve konsola) [Gizli] etiketiyle görünür; gönderen etiketi görmez.
+     * Mesajın üstüne gelince gönderildiği saat görünür; [i] gibi kendi hover'ı olan parçalar kendininkini gösterir.
+     */
     private Component render(Player sender, ChatChannel channel, Component tags, Component name, Component message,
                              Audience viewer) {
-        Component line = render(sender, channel, tags, name, message);
+        Component timed = Component.text().append(message)
+                .hoverEvent(messages.get("message-time", Placeholder.unparsed("time", TIME.format(Instant.now()))))
+                .build();
+        Component line = render(sender, channel, tags, name, timed);
         return !sender.equals(viewer) && mutes.isShadowMuted(sender.getUniqueId(), System.currentTimeMillis())
                 ? messages.get("shadow-tag").append(line) : line;
     }

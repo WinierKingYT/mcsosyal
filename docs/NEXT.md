@@ -115,12 +115,21 @@
   `Parties` düzenlemeleri parti numarasıyla. Panelde 10 üye yeri (11-15, 20-24). Testler 99/99. Oyunda denenmedi.
   Sonra (sahip seçerse): parti seviyesi/XP (RPG), parti evi ve ışınlanma, şifre, rütbeler.
 
+- 2026-10-29: Sohbette mesajın üstüne gelince saati (`message-time`, sunucu saati). `/oyuncular` (`PlayersMenu`):
+  çevrimiçiler isimle, sonra son 7 günde çıkanlar yeni çıkandan eskiye; hover'da bölge, AFK, parti ya da son
+  görülme, tıkla profil, 45'erli sayfa. Oyunda denenmedi.
+  Sahibin kenara aldıkları: isim rengi (VIP), sohbet oyunları, anket, takip et, oyuncu notları.
+
 ## Yol haritası (sahibin seçtiği sıra)
 1. [x] Arkadaş listesi
 2. [x] Oyuncu profili (`/profil`, kart + oynama süresi + arkadaş ekle butonu)
 3. [x] Duyuru sistemi
 4. [x] Moderasyon: 1. ve 2. tur
 5. [x] Parti sistemi (sosyal taraf; XP/ganimet/zindan RPG tarafında `parties()` ile)
+
+## Oyunda doğrulanacak (oyuncular, mesaj saati)
+- [ ] Mesajın üstüne gelince saat; `[i]` eşyasının üstüne gelince yine eşya bilgisi
+- [ ] `/oyuncular`: çevrimiçiler önce, sonra en son çıkan; hover'da bölge/AFK/parti, çevrimdışında son görülme
 
 ## Oyunda doğrulanacak (parti)
 - [ ] `/parti` lobi → Parti Kur; ikinci hesap Mevcut Partiler'den katılıyor; gizli yapınca listede yok

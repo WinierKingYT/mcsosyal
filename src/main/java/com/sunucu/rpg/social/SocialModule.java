@@ -33,6 +33,7 @@ import com.sunucu.rpg.social.party.PartyColor;
 import com.sunucu.rpg.social.party.PartyCommands;
 import com.sunucu.rpg.social.party.PartyInfo;
 import com.sunucu.rpg.social.party.PartyMenu;
+import com.sunucu.rpg.social.profile.PlayersMenu;
 import com.sunucu.rpg.social.profile.ProfileCommand;
 import com.sunucu.rpg.social.profile.ProfileMenu;
 import com.sunucu.rpg.world.Regions;
@@ -131,6 +132,7 @@ public final class SocialModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(friendActions, plugin);
         plugin.getServer().getPluginManager().registerEvents(partyActions, plugin);
         partyMenu = menu.partyMenu();
+        new PlayersMenu(messages, afk, regions, parties, partyActions, profile).register(plugin);
         PartyCommands.register(plugin, parties, partyActions, partyMenu, messages);
         FriendCommands.register(plugin, friends, friendActions, menu.friendsMenu(), messages);
         ProfileCommand.register(plugin, profile, messages);
