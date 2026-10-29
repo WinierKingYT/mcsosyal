@@ -13,11 +13,16 @@ public interface SocialStore {
     String HIDDEN_CHANNELS = "channel.hidden";
     String MUTED_NOTIFICATIONS = "notify.off";
 
-    /** activeChannel null ise varsayılan kanal; mutedUntil 0 ise susturulmamış. */
+    /**
+     * activeChannel null ise varsayılan kanal; mutedUntil 0 ise susturulmamış.
+     * incomingRequests: bu oyuncuya gelen arkadaşlık istekleri, outgoingRequests: onun gönderdikleri.
+     */
     record PlayerData(String activeChannel, Set<String> hiddenChannels, Set<String> mutedNotifications,
-                      Set<UUID> ignores, long mutedUntil) {
+                      Set<UUID> ignores, long mutedUntil, Set<UUID> friends, Set<UUID> incomingRequests,
+                      Set<UUID> outgoingRequests) {
 
-        public static final PlayerData EMPTY = new PlayerData(null, Set.of(), Set.of(), Set.of(), 0);
+        public static final PlayerData EMPTY =
+                new PlayerData(null, Set.of(), Set.of(), Set.of(), 0, Set.of(), Set.of(), Set.of());
     }
 
     /** Liste ayarları için: virgülle birleştirir, boşsa null (ayar silinir). */
@@ -36,6 +41,15 @@ public interface SocialStore {
     /** untilMillis 0 ise susturma silinir. */
     void saveMute(UUID player, long untilMillis);
 
+    void addFriendRequest(UUID from, UUID to);
+
+    void removeFriendRequest(UUID from, UUID to);
+
+    /** İki yönlü arkadaşlık; aradaki istekler de silinir. */
+    void addFriendship(UUID a, UUID b);
+
+    void removeFriendship(UUID a, UUID b);
+
     SocialStore NONE = new SocialStore() {
         @Override
         public PlayerData load(UUID player) {
@@ -52,6 +66,22 @@ public interface SocialStore {
 
         @Override
         public void saveMute(UUID player, long untilMillis) {
+        }
+
+        @Override
+        public void addFriendRequest(UUID from, UUID to) {
+        }
+
+        @Override
+        public void removeFriendRequest(UUID from, UUID to) {
+        }
+
+        @Override
+        public void addFriendship(UUID a, UUID b) {
+        }
+
+        @Override
+        public void removeFriendship(UUID a, UUID b) {
         }
     };
 }

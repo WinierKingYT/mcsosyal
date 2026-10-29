@@ -16,10 +16,10 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-/** Etiket ve özel mesaj bildirimleri (ses, etikette ekran yazısı); oyuncu her birini ayrı kapatabilir. */
+/** Etiket, özel mesaj ve arkadaş bildirimleri (ses, etikette ekran yazısı); oyuncu her birini ayrı kapatabilir. */
 public final class Notifications {
 
-    public enum Type { MENTION, PRIVATE_MESSAGE }
+    public enum Type { MENTION, PRIVATE_MESSAGE, FRIEND }
 
     private static final Title.Times TITLE_TIMES =
             Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1500), Duration.ofMillis(400));
@@ -39,6 +39,7 @@ public final class Notifications {
         this.mentionCooldownMillis = mentionCooldownSeconds * 1000;
         sounds.put(Type.MENTION, sound(soundConfig, "mention", "entity.experience_orb.pickup"));
         sounds.put(Type.PRIVATE_MESSAGE, sound(soundConfig, "private-message", "block.note_block.pling"));
+        sounds.put(Type.FRIEND, sound(soundConfig, "friend", "block.note_block.chime"));
         for (Type type : Type.values()) {
             muted.put(type, ConcurrentHashMap.newKeySet());
         }

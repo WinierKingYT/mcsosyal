@@ -4,7 +4,9 @@ import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 
 /** Menü eşyaları. Minecraft isim ve lore'u varsayılan italik gösterir; burada kapatılır. */
 public final class Icons {
@@ -26,6 +28,13 @@ public final class Icons {
                 meta.setEnchantmentGlintOverride(true);
             }
         });
+        return item;
+    }
+
+    /** Oyuncu kafası (skin'iyle). Çevrimdışı oyuncu da olur. */
+    public static ItemStack head(OfflinePlayer owner, Component name, List<Component> lore) {
+        ItemStack item = icon(Material.PLAYER_HEAD, name, lore);
+        item.editMeta(SkullMeta.class, meta -> meta.setOwningPlayer(owner));
         return item;
     }
 

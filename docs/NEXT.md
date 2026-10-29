@@ -51,6 +51,22 @@
   (susturma dahil) siliyordu → `pendingLogins`. Veri okunamazsa oyuncu artık geri çevriliyor (varsayılanla
   girip susturmayı atlatmasın, ayarlarının üstüne yazılmasın). `/minecraft:me`, `/minecraft:msg` vb. filtreyi
   atlatıyordu → `VanillaCommandGuard`. Testler 41/41.
+- 2026-10-29: Arkadaş listesi (`social.friends`): `/arkadaş` paneli (kafalar, çevrimiçiler önce, sol tık mesaj,
+  shift+sağ tık sil), istekler paneli, sohbette tıklanabilir [Kabul]/[Reddet], karşılıklı istek = arkadaşlık,
+  giriş/çıkış bildirimi (Bildirimler'den kapatılır), en fazla 45. Veritabanında `social_friends` (iki yönlü,
+  transaction) ve `social_friend_requests`. Testler 49/49. Oyunda denenmedi.
+
+## Yol haritası (sahibin seçtiği sıra)
+1. [x] Arkadaş listesi
+2. [ ] Oyuncu profili (`/profil`, kart + oynama süresi + arkadaş ekle butonu)
+3. [ ] Duyuru sistemi
+4. [ ] Moderasyon (mute/ban/uyarı, `/report`, sohbet logu)
+5. [ ] Belki parti sistemi (arkadaşla sınır konuşulacak)
+
+## Oyunda doğrulanacak (arkadaşlar)
+- [ ] İstek, [Kabul]/[Reddet] butonları (Türkçe `ş`'li komut tıklamada çalışıyor mu), karşılıklı istek
+- [ ] Panelde kafalar skin'li görünüyor mu, çevrimdışı arkadaş adı doğru mu
+- [ ] Giriş/çıkış bildirimi, kapatınca gelmiyor mu; çıkıp girince arkadaşlar korunuyor mu
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj

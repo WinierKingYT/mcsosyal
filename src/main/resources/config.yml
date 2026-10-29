@@ -69,6 +69,10 @@ chat:
   sounds:
     mention: "entity.experience_orb.pickup"
     private-message: "block.note_block.pling"
+    friend: "block.note_block.chime"
+  # Arkadaş sınırı; panel tek sayfa olduğu için en fazla 45.
+  friends:
+    max: 45
   # Bu kadar saniye hareketsiz kalan oyuncu AFK sayılır. /afk ile elle de olunur.
   afk-after-seconds: 300
   # Aynı mesaj bu süre içinde tekrar gönderilemez.
@@ -165,6 +169,41 @@ messages:
   menu-notifications: "<yellow>Bildirimler</yellow>"
   menu-notifications-lore: "<gray>Etiket ve özel mesaj\n<gray>bildirimlerini aç ya da kapat."
   channels-title: "Sohbet Kanalları"
+  menu-friends: "<green>Arkadaşlar</green>"
+  menu-friends-lore: "<gray>Arkadaşlarını gör, mesaj at,\n<gray>istekleri kabul et."
+  # Arkadaş listesi. <name> oyuncu adı, <count>/<max> sayı ve sınır.
+  friends-title: "Arkadaşlar (<count>/<max>)"
+  friend-head: "<yellow><name></yellow>"
+  friend-online: "<green>● Çevrimiçi</green>"
+  friend-offline: "<gray>● Çevrimdışı</gray>"
+  friend-click-message: "<gray>Sol tık: <white>mesaj yaz</white></gray>"
+  friend-click-remove: "<gray>Shift + sağ tık: <red>arkadaşlıktan çıkar</red></gray>"
+  friend-requests: "<gold>Arkadaşlık İstekleri (<count>)</gold>"
+  friend-requests-lore: "<gray>Sana gelen istekleri gör."
+  friend-requests-title: "Arkadaşlık İstekleri"
+  friend-request-lore: "<gray>Sol tık: <green>kabul et</green></gray>\n<gray>Sağ tık: <red>reddet</red></gray>"
+  friend-requests-back-lore: "<dark_gray>Arkadaş listesine dön."
+  friend-info: "<white>Arkadaş nasıl eklenir?</white>"
+  friend-info-lore: "<gray>Yaz: <white>/arkadaş ekle isim</white>\n<gray>En fazla <white><max></white><gray> arkadaş."
+  friend-message-prompt: "<gray>Tıkla: <white><name></white><gray> oyuncusuna mesaj yaz.</gray>"
+  friend-request-sent: "<gray><name> oyuncusuna arkadaşlık isteği gönderildi.</gray>"
+  friend-request-received: "<yellow><name></yellow> <gray>sana arkadaşlık isteği gönderdi.</gray>"
+  friend-accept-button: "<green>[Kabul]</green>"
+  friend-deny-button: "<red>[Reddet]</red>"
+  friend-added: "<green><name> ile artık arkadaşsınız!</green>"
+  friend-denied: "<gray><name> oyuncusunun isteği reddedildi.</gray>"
+  friend-removed: "<gray><name> artık arkadaşın değil.</gray>"
+  friend-self: "<red>Kendini arkadaş ekleyemezsin.</red>"
+  friend-already: "<gray><name> zaten arkadaşın.</gray>"
+  friend-already-sent: "<gray><name> oyuncusuna zaten istek gönderdin.</gray>"
+  friend-your-limit: "<red>Arkadaş sınırına ulaştın (<max>).</red>"
+  friend-their-limit: "<red><name> arkadaş sınırına ulaşmış.</red>"
+  friend-no-request: "<red><name> oyuncusundan bekleyen istek yok.</red>"
+  friend-not-friends: "<red><name> arkadaşın değil.</red>"
+  friend-unknown: "<red>Listende <name> diye biri yok.</red>"
+  friend-joined: "<green>▶</green> <gray>Arkadaşın <white><name></white><gray> oyuna girdi.</gray>"
+  friend-left: "<red>◀</red> <gray>Arkadaşın <white><name></white><gray> oyundan çıktı.</gray>"
+  friend-requests-waiting: "<gold><count> bekleyen arkadaşlık isteğin var.</gold> <gray>Görmek için tıkla.</gray>"
   channel-active: "<green>▶ Şu an buraya yazıyorsun</green>"
   channel-select: "<gray>Sol tık: <white>buraya yaz</white></gray>"
   channel-visible: "<gray>Sağ tık: <white>kanalı gizle</white></gray>"
@@ -178,6 +217,8 @@ messages:
   notify-mention-lore: "<gray>Biri seni <white>@isim</white><gray> ile etiketleyince\n<gray>ses ve ekranda yazı."
   notify-private-message: "<light_purple>Özel mesaj gelince</light_purple>"
   notify-private-message-lore: "<gray>Sana <white>/msg</white><gray> gelince ses."
+  notify-friend: "<green>Arkadaşlar</green>"
+  notify-friend-lore: "<gray>Arkadaşın oyuna girip çıkınca\n<gray>ve arkadaşlık isteği gelince bildirim."
   notify-on: "<green>Açık</green>\n<gray>Tıkla: kapat</gray>"
   notify-off: "<red>Kapalı</red>\n<gray>Tıkla: aç</gray>"
 

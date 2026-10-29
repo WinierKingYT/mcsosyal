@@ -7,6 +7,9 @@ import com.sunucu.rpg.social.chat.ChannelPreferences;
 import com.sunucu.rpg.social.chat.ChatChannel;
 import com.sunucu.rpg.social.chat.ChatListener;
 import com.sunucu.rpg.social.chat.Notifications;
+import com.sunucu.rpg.social.friends.FriendActions;
+import com.sunucu.rpg.social.friends.Friends;
+import com.sunucu.rpg.social.friends.FriendsMenu;
 import java.util.ArrayList;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -24,10 +27,12 @@ public final class SocialMenu {
 
     private static final int ROWS = 3;
     private static final int MAIN_CHANNELS_SLOT = 11;
+    private static final int MAIN_FRIENDS_SLOT = 13;
     private static final int MAIN_NOTIFICATIONS_SLOT = 15;
     private static final int FIRST_CHANNEL_SLOT = 10;
     private static final int MAX_CHANNELS = 7;
     private static final int MENTION_SLOT = 11;
+    private static final int FRIEND_SLOT = 13;
     private static final int PRIVATE_MESSAGE_SLOT = 15;
     private static final int BACK_SLOT = 18;
 
@@ -35,18 +40,27 @@ public final class SocialMenu {
     private final ChatListener chat;
     private final ChannelPreferences preferences;
     private final Notifications notifications;
+    private final FriendsMenu friendsMenu;
 
-    public SocialMenu(Messages messages, ChatListener chat, ChannelPreferences preferences, Notifications notifications) {
+    public SocialMenu(Messages messages, ChatListener chat, ChannelPreferences preferences, Notifications notifications,
+                      Friends friends, FriendActions friendActions) {
         this.messages = messages;
         this.chat = chat;
         this.preferences = preferences;
         this.notifications = notifications;
+        this.friendsMenu = new FriendsMenu(friends, friendActions, messages, this::openMain);
+    }
+
+    public FriendsMenu friendsMenu() {
+        return friendsMenu;
     }
 
     public void openMain(Player player) {
         new Menu(ROWS, messages.get("menu-title"))
                 .button(MAIN_CHANNELS_SLOT, Icons.icon(Material.WRITABLE_BOOK, messages.get("menu-channels"),
                         messages.lines("menu-channels-lore")), click -> openChannels(player))
+                .button(MAIN_FRIENDS_SLOT, Icons.icon(Material.PLAYER_HEAD, messages.get("menu-friends"),
+                        messages.lines("menu-friends-lore")), click -> friendsMenu.open(player))
                 .button(MAIN_NOTIFICATIONS_SLOT, Icons.icon(Material.BELL, messages.get("menu-notifications"),
                         messages.lines("menu-notifications-lore")), click -> openNotifications(player))
                 .open(player);
@@ -104,6 +118,9 @@ public final class SocialMenu {
         menu.button(MENTION_SLOT, toggleIcon(player, Notifications.Type.MENTION, Material.NAME_TAG,
                         messages.get("notify-mention"), messages.lines("notify-mention-lore")),
                 click -> toggle(menu, player, Notifications.Type.MENTION));
+        menu.button(FRIEND_SLOT, toggleIcon(player, Notifications.Type.FRIEND, Material.PLAYER_HEAD,
+                        messages.get("notify-friend"), messages.lines("notify-friend-lore")),
+                click -> toggle(menu, player, Notifications.Type.FRIEND));
         menu.button(PRIVATE_MESSAGE_SLOT, toggleIcon(player, Notifications.Type.PRIVATE_MESSAGE, Material.PAPER,
                         messages.get("notify-private-message"), messages.lines("notify-private-message-lore")),
                 click -> toggle(menu, player, Notifications.Type.PRIVATE_MESSAGE));

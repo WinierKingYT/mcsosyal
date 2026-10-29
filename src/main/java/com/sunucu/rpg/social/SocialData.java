@@ -5,6 +5,7 @@ import com.sunucu.rpg.social.chat.ChannelPreferences;
 import com.sunucu.rpg.social.chat.ChatMutes;
 import com.sunucu.rpg.social.chat.Notifications;
 import com.sunucu.rpg.social.chat.PrivateMessages;
+import com.sunucu.rpg.social.friends.Friends;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,12 +34,14 @@ public final class SocialData implements Listener {
     private final Notifications notifications;
     private final PrivateMessages privateMessages;
     private final ChatMutes mutes;
+    private final Friends friends;
     // Verisi yüklenmiş ama henüz oyuna girmemiş oyuncular. Aynı hesapla ikinci kez girilince eski oturum atılır;
     // onun çıkışı yeni oturumun verisini silmesin (yoksa susturma kalkardı).
     private final Set<UUID> pendingLogins = ConcurrentHashMap.newKeySet();
 
     public SocialData(SocialStore store, Logger logger, Messages messages, ChannelPreferences preferences,
-                      Notifications notifications, PrivateMessages privateMessages, ChatMutes mutes) {
+                      Notifications notifications, PrivateMessages privateMessages, ChatMutes mutes,
+                      Friends friends) {
         this.store = store;
         this.logger = logger;
         this.messages = messages;
@@ -46,6 +49,7 @@ public final class SocialData implements Listener {
         this.notifications = notifications;
         this.privateMessages = privateMessages;
         this.mutes = mutes;
+        this.friends = friends;
     }
 
     /** Plugin oyuncular içerdeyken açılırsa (ör. sunucu yeniden yüklenince) onları da yükle. */
@@ -96,6 +100,7 @@ public final class SocialData implements Listener {
         notifications.load(player, data.mutedNotifications());
         privateMessages.load(player, data.ignores());
         mutes.load(player, data.mutedUntil());
+        friends.load(player, data.friends(), data.incomingRequests(), data.outgoingRequests());
     }
 
     private void unload(UUID player) {
@@ -103,5 +108,6 @@ public final class SocialData implements Listener {
         notifications.unload(player);
         privateMessages.unload(player);
         mutes.unload(player);
+        friends.unload(player);
     }
 }

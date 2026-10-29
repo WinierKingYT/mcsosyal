@@ -14,6 +14,9 @@ import com.sunucu.rpg.social.chat.PlayerCard;
 import com.sunucu.rpg.social.chat.PrivateMessages;
 import com.sunucu.rpg.social.chat.Showcase;
 import com.sunucu.rpg.social.chat.VanillaCommandGuard;
+import com.sunucu.rpg.social.friends.FriendActions;
+import com.sunucu.rpg.social.friends.FriendCommands;
+import com.sunucu.rpg.social.friends.Friends;
 import com.sunucu.rpg.world.Regions;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -21,6 +24,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SocialModule implements Module {
+
+    // Arkadaş paneli tek sayfa: 45 kafa sığıyor.
+    private static final int MAX_FRIENDS = 45;
 
     private final JavaPlugin plugin;
     private final Database database;
@@ -54,15 +60,19 @@ public final class SocialModule implements Module {
         PlayerCard card = new PlayerCard(config.getMapList("player-card"), messages);
         chat = new ChatListener(plugin, config, messages, filter, privateMessages, notifications, showcase,
                 preferences, card, mutes);
-        SocialMenu menu = new SocialMenu(messages, chat, preferences, notifications);
+        Friends friends = new Friends(store, Math.min(config.getInt("friends.max", 45), MAX_FRIENDS));
+        FriendActions friendActions = new FriendActions(friends, messages, notifications);
+        SocialMenu menu = new SocialMenu(messages, chat, preferences, notifications, friends, friendActions);
         SocialData data = new SocialData(store, plugin.getLogger(), messages, preferences, notifications,
-                privateMessages, mutes);
+                privateMessages, mutes, friends);
 
         plugin.getServer().getPluginManager().registerEvents(data, plugin);
         data.loadOnline();
         plugin.getServer().getPluginManager().registerEvents(chat, plugin);
         plugin.getServer().getPluginManager().registerEvents(new VanillaCommandGuard(messages), plugin);
         plugin.getServer().getPluginManager().registerEvents(afk, plugin);
+        plugin.getServer().getPluginManager().registerEvents(friendActions, plugin);
+        FriendCommands.register(plugin, friends, friendActions, menu.friendsMenu(), messages);
         plugin.getServer().getPluginManager().registerEvents(new LiveInventoryView.Protection(plugin), plugin);
         afk.start(plugin);
         ChatCommands.register(plugin, chat, privateMessages, afk, menu, mutes, messages);
@@ -73,7 +83,7 @@ public final class SocialModule implements Module {
             return SocialStore.NONE;
         }
         try {
-            return SqliteSocialStore.create(database);
+            return SqliteSocialStore.create(database, plugin.getLogger());
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Sosyal tablolar kurulamadı! Ayarlar bu oturumda kaydedilmeyecek", e);
             return SocialStore.NONE;
