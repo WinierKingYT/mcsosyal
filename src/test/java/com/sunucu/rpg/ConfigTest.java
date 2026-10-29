@@ -25,9 +25,9 @@ import org.junit.jupiter.api.Test;
 /** config.yml bozuksa plugin hiç açılmaz; bunu sunucuya gitmeden yakala. */
 class ConfigTest {
 
-    // messages.get("anahtar"), x ? "a" : "b" ve switch içindeki -> "anahtar" biçimleri.
+    // messages.get/lines("anahtar"), x ? "a" : "b" ve switch içindeki -> "anahtar" biçimleri.
     private static final Pattern MESSAGE_KEY = Pattern.compile(
-            "messages\\.get\\(\"([a-z-]+)\"|\\? \"([a-z-]+)\" : \"([a-z-]+)\"|-> \"([a-z-]+)\";");
+            "messages\\.(?:get|lines)\\(\"([a-z-]+)\"|\\? \"([a-z-]+)\" : \"([a-z-]+)\"|-> \"([a-z-]+)\";");
 
     private static YamlConfiguration load() throws IOException, InvalidConfigurationException {
         try (Reader reader = new InputStreamReader(

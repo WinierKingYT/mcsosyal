@@ -49,6 +49,10 @@ public final class Notifications {
         return false;
     }
 
+    public boolean isEnabled(Player player, Type type) {
+        return !muted.get(type).contains(player.getUniqueId());
+    }
+
     public void play(Player player, Type type) {
         if (!muted.get(type).contains(player.getUniqueId())) {
             player.playSound(sounds.get(type));

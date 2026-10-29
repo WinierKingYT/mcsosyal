@@ -32,6 +32,11 @@
   dosyaya eklenir (bozuk dosyanın üstüne yazılmaz). Testler 22/22. Oyunda denenmedi.
 - 2026-10-29: `[inv]` oyunda NPE verdi: boş yuvalar null, `List.of` null kabul etmiyor → `Arrays.asList`.
   Hata anında Paper mesajı filtresiz yayınlamıştı; `onChat` artık hata olursa mesajı engelliyor ve logluyor.
+- 2026-10-29: Komut kalabalığı: `/l` `/t` `/yardım` `/bildirim` ve gereksiz alias'lar kaldırıldı. Yerine `/sosyal`
+  paneli (`SocialMenu`): kanal seçme (kalıcı, seçilen kanala yazılır) ve gizleme, bildirim ayarları. GUI altyapısı
+  `core.gui` (Menu, MenuListener, Icons). Oyuncu kartı: `chat.player-card` + `StatsProvider`. Envanter penceresi
+  5 sıra (çanta, hızlı çubuk, altta zırh + ikinci el, gri cam), eşya penceresi 3x3. `rpg.social.inventory.edit`
+  ile yetkili gerçek envanteri açıp düzenler. Testler 28/28. Oyunda denenmedi.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -46,7 +51,7 @@
 ## Sohbet — 2. sürüm
 - [x] Reklam filtresi (IP ve alan adı kalıpları) + test
 - [x] Ticaret, yardım ve yetkili kanalları, `/t` `/yardım` `/sc` `/l`, kanal başına bekleme süresi
-- [ ] Kanal susturma (oyuncu tercihi; kalıcı olması için veritabanı katmanı gerekir)
+- [x] Kanal gizleme (`/sosyal`; kalıcı olması için veritabanı katmanı gerekir)
 - [x] Etiketleme `@isim` + isim vurgusu + bildirim sesi (`@parti` parti sistemiyle birlikte)
 - [x] Eşya gösterme `[item]` / `[eşya]` (RPG eşyaları ItemStack olduğu sürece ek arayüz gerekmez)
 - [x] Konum paylaşma `[konum]`
@@ -56,7 +61,10 @@
 
 ## Oyunda doğrulanacak
 - [ ] Örs ismi `site.com` olan eşya op değilken `[i]` ile engelleniyor mu
-- [ ] Eşyaya ve `[inv]`'e tıklayınca pencere açılıyor, içinden eşya alınamıyor mu
+- [ ] Eşyaya ve `[inv]`'e tıklayınca pencere açılıyor, içinden eşya alınamıyor mu (shift-click dahil)
+- [ ] Op olarak başkasının `[inv]`'ine tıklayınca gerçek envanter açılıyor ve düzenleme oyuncuya yansıyor mu
+- [ ] `/sosyal`: kanal seçince normal sohbet o kanala gidiyor mu, gizlenen kanal görünmüyor mu
+- [ ] Vanilla `/me` ve `/teammsg` filtreyi atlatıyor; kapatılmalı mı karar ver
 - [ ] Etiketlenince ekran yazısı, 10 sn içinde ikinci etikette tekrar çıkmıyor mu
 - [ ] `[konum]` Başlangıç Köyü içinde bölge adını gösteriyor mu
 - [ ] Social spy (3 hesap)

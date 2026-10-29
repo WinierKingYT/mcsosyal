@@ -17,29 +17,49 @@ chat:
     world: "Dünya"
     world_nether: "Nether"
     world_the_end: "End"
-  # Kanal komutları: /l (yerel), /t (ticaret), /yardım (yardım), /sc (yetkili).
+  # Oyuncu yazacağı kanalı /sosyal → Sohbet Kanalları'ndan seçer (sağ tık: kanalı gizle). Yetkililer /sc ile de yazar.
+  # name ve icon panelde, tag sohbet satırında görünür. icon bir Minecraft eşya adıdır (ör. BELL, EMERALD).
   # Bekleme süresi kanal başınadır. permission verilen kanalı sadece o izne sahip olanlar görür ve yazar.
   channels:
     global:
+      name: "<gold>Global</gold>"
+      icon: BELL
       tag: "<gold>G</gold>"
       cooldown-millis: 2000
     local:
+      name: "<green>Yerel</green>"
+      icon: OAK_SAPLING
       tag: "<green>Y</green>"
       cooldown-millis: 2000
       radius: 64
     trade:
+      name: "<aqua>Ticaret</aqua>"
+      icon: EMERALD
       tag: "<aqua>T</aqua>"
       cooldown-millis: 45000
     help:
+      name: "<yellow>Yardım</yellow>"
+      icon: BOOK
       tag: "<yellow>?</yellow>"
       cooldown-millis: 2000
     staff:
+      name: "<red>Yetkili</red>"
+      icon: REDSTONE
       tag: "<red>Yetkili</red>"
       cooldown-millis: 0
       permission: rpg.social.chat.staff
-  # Mesajın başına bu karakter konunca yerel kanala gider.
+  # Sohbette ismin üstüne gelince çıkan oyuncu kartı. Her satır bir değere bağlı (stat); değerleri RPG sistemi
+  # verir, değer yoksa satır gösterilmez. Sırayı ve hangi bilgilerin görüneceğini buradan seç.
+  player-card:
+    - stat: class
+      line: "<gray>Sınıf: <white><value></white></gray>"
+    - stat: level
+      line: "<gray>Seviye: <white><value></white></gray>"
+    - stat: guild
+      line: "<gray>Lonca: <white><value></white></gray>"
+  # Mesajın başına bu karakter konunca, seçili kanal ne olursa olsun yerel kanala gider.
   local-prefix: "!"
-  # Minecraft ses anahtarları. Oyuncular /bildirim etiket|mesaj ile kapatabilir.
+  # Minecraft ses anahtarları. Oyuncular /sosyal → Bildirimler'den kapatabilir.
   sounds:
     mention: "entity.experience_orb.pickup"
     private-message: "block.note_block.pling"
@@ -95,6 +115,7 @@ messages:
   inventory-hover: "<gray>Tıkla: envanteri gör</gray>"
   view-item-title: "<name> - Eşya"
   view-inventory-title: "<name> - Envanter"
+  view-empty-armor: "<gray><slot> yok</gray>"
   # [konum]: tıklayınca "x y z" panoya kopyalanır.
   # <place>: bulunduğu bölgenin adı (regions), bölge yoksa dünya adı. <world> her zaman dünya adı.
   location: "<green>[<place> <x>, <y>, <z>]</green>"
@@ -107,9 +128,31 @@ messages:
   # Tab listesinde AFK oyuncunun ismi.
   afk-tab: "<dark_gray><name> [AFK]</dark_gray>"
   msg-afk: "<gray><name> şu an AFK, mesajını sonra görebilir.</gray>"
-  sound-on: "<gray><type> sesi <green>açık</green>.</gray>"
-  sound-off: "<gray><type> sesi <red>kapalı</red>.</gray>"
+  # Oyuncu kartının başlığı ve en alttaki ipucu (satırlar chat.player-card).
+  player-card-header: "<yellow><name></yellow>"
   name-hover: "<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"
+
+  # /sosyal paneli. Çok satırlı açıklamalarda satırlar \n ile ayrılır.
+  menu-title: "Sosyal"
+  menu-back: "<gray>Geri</gray>"
+  menu-channels: "<gold>Sohbet Kanalları</gold>"
+  menu-channels-lore: "<gray>Hangi kanala yazacağını seç,\n<gray>istemediğin kanalları gizle."
+  menu-notifications: "<yellow>Bildirimler</yellow>"
+  menu-notifications-lore: "<gray>Etiket ve özel mesaj\n<gray>bildirimlerini aç ya da kapat."
+  channels-title: "Sohbet Kanalları"
+  channel-active: "<green>▶ Şu an buraya yazıyorsun</green>"
+  channel-select: "<gray>Sol tık: <white>buraya yaz</white></gray>"
+  channel-visible: "<gray>Sağ tık: <white>kanalı gizle</white></gray>"
+  channel-hidden: "<red>Gizli: mesajlarını görmüyorsun</red>\n<gray>Sağ tık: <white>kanalı göster</white></gray>"
+  channel-now-active: "<gray>Artık <channel><gray> kanalına yazıyorsun.</gray>"
+  channel-now-hidden: "<gray><channel><gray> kanalı gizlendi.</gray>"
+  channel-now-visible: "<gray><channel><gray> kanalı tekrar görünüyor.</gray>"
+  channel-cannot-hide-active: "<red>Yazdığın kanalı gizleyemezsin, önce başka bir kanal seç.</red>"
+  notifications-title: "Bildirimler"
+  notify-mention: "<yellow>Etiketlenince</yellow>"
+  notify-private-message: "<light_purple>Özel mesaj gelince</light_purple>"
+  notify-on: "<green>Açık</green>\n<gray>Tıkla: kapat</gray>"
+  notify-off: "<red>Kapalı</red>\n<gray>Tıkla: aç</gray>"
 
 # İsimli bölgeler: [konum] paylaşımında koordinatla birlikte bölge adı görünür.
 # from/to iki köşenin [x, z] koordinatı, yükseklik fark etmez. İç içe bölgelerde küçük olanı üste yaz.

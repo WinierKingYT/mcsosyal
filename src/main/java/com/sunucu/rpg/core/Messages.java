@@ -1,6 +1,8 @@
 package com.sunucu.rpg.core;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -29,6 +31,12 @@ public final class Messages {
 
     public Component get(String key, TagResolver... resolvers) {
         return parse(templates.getOrDefault(key, "<red>eksik mesaj: " + key), resolvers);
+    }
+
+    /** Çok satırlı metin (menü açıklamaları): config'de satırlar "\n" ile ayrılır. */
+    public List<Component> lines(String key, TagResolver... resolvers) {
+        String template = templates.getOrDefault(key, "<red>eksik mesaj: " + key);
+        return Arrays.stream(template.split("\n")).map(line -> parse(line, resolvers)).toList();
     }
 
     public static Component parse(String template, TagResolver... resolvers) {

@@ -17,7 +17,11 @@ Nerede kaldığımız: [docs/NEXT.md](docs/NEXT.md). Sohbet tasarımı: [docs/CH
   Arkadaşın paketlerine (`combat`, `classes`, `quest`, `items` vb.) dokunma.
 - Komutlar `paper-plugin.yml`'e değil, modülün içinde Brigadier ile kaydedilir (`LifecycleEvents.COMMANDS`).
 - İzinler `paper-plugin.yml`'de, `rpg.social.*` önekiyle.
-- RPG verisi (sınıf, seviye, eşya) sosyal tarafa arayüzlerle gelir (ör. `TagProvider`), koda doğrudan erişilmez.
+- RPG verisi (sınıf, seviye, eşya) sosyal tarafa arayüzlerle gelir (`TagProvider`, `StatsProvider`),
+  koda doğrudan erişilmez.
+- Menüler `core.gui.Menu` ile yapılır (iki taraf da kullanır): eşyalar alınamaz, buton işleri sonraki tick'te
+  çalışır. Ayrı bir menü sistemi kurulmaz.
+- Oyuncu komutu eklemeden önce düşün: ayarlar `/sosyal` paneline gider, komut listesi kalabalıklaşmasın.
 - Tüm oyuncuya görünen yazılar `config.yml` → `messages` altında, MiniMessage formatında.
 
 ## Değişmez kurallar

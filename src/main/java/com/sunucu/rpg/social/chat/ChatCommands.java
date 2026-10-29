@@ -2,11 +2,11 @@ package com.sunucu.rpg.social.chat;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.social.AfkTracker;
+import com.sunucu.rpg.social.SocialMenu;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
@@ -20,7 +20,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** /chat clear|lock, /msg, /r, /ignore, /bildirim, /socialspy, /afk ve kanal komutları (/l, /t, /yardım, /sc). */
+/**
+ * Oyuncu komutları az tutulur: /sosyal (kanal ve bildirim ayarları), /msg, /r, /ignore, /afk.
+ * Yetkili komutları (/chat, /socialspy, /sc) izni olmayanın komut listesinde hiç görünmez.
+ */
 public final class ChatCommands {
 
     public static final String MODERATE = "rpg.social.chat.moderate";
@@ -30,7 +33,7 @@ public final class ChatCommands {
     }
 
     public static void register(JavaPlugin plugin, ChatListener chat, PrivateMessages pm,
-                                Notifications notifications, AfkTracker afk, Messages messages) {
+                                AfkTracker afk, SocialMenu menu, Messages messages) {
         plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             Commands commands = event.registrar();
 
@@ -61,7 +64,8 @@ public final class ChatCommands {
                                         StringArgumentType.getString(ctx, "mesaj"));
                                 return Command.SINGLE_SUCCESS;
                             })))
-                    .build(), "Özel mesaj gönder", List.of("tell", "w", "m"));
+                    // tell ve w kalmalı: yoksa Minecraft'ın kendi /tell'i geri gelir ve filtresiz özel mesaj olur.
+                    .build(), "Özel mesaj gönder", List.of("tell", "w"));
 
             commands.register(Commands.literal("r")
                     .requires(src -> src.getSender() instanceof Player)
@@ -69,7 +73,7 @@ public final class ChatCommands {
                         pm.reply((Player) ctx.getSource().getSender(), StringArgumentType.getString(ctx, "mesaj"));
                         return Command.SINGLE_SUCCESS;
                     }))
-                    .build(), "Son özel mesaja cevap ver", List.of("reply"));
+                    .build(), "Son özel mesaja cevap ver");
 
             commands.register(Commands.literal("ignore")
                     .requires(src -> src.getSender() instanceof Player)
@@ -81,13 +85,15 @@ public final class ChatCommands {
                                 Placeholder.unparsed("name", target.getName())));
                         return Command.SINGLE_SUCCESS;
                     }))
-                    .build(), "Bir oyuncuyu engelle ya da engeli kaldır", List.of("engelle"));
+                    .build(), "Bir oyuncuyu engelle ya da engeli kaldır");
 
-            commands.register(Commands.literal("bildirim")
+            commands.register(Commands.literal("sosyal")
                     .requires(src -> src.getSender() instanceof Player)
-                    .then(soundToggle("etiket", Notifications.Type.MENTION, "Etiket", notifications, messages))
-                    .then(soundToggle("mesaj", Notifications.Type.PRIVATE_MESSAGE, "Özel mesaj", notifications, messages))
-                    .build(), "Bildirim seslerini aç ya da kapat");
+                    .executes(ctx -> {
+                        menu.openMain((Player) ctx.getSource().getSender());
+                        return Command.SINGLE_SUCCESS;
+                    })
+                    .build(), "Sohbet kanalları ve bildirim ayarları");
 
             commands.register(Commands.literal("socialspy")
                     .requires(src -> src.getSender() instanceof Player player && player.hasPermission(PrivateMessages.SPY))
@@ -96,7 +102,7 @@ public final class ChatCommands {
                         player.sendMessage(messages.get(pm.toggleSpy(player) ? "spy-on" : "spy-off"));
                         return Command.SINGLE_SUCCESS;
                     })
-                    .build(), "Başkalarının özel mesajlarını gör", List.of("spy"));
+                    .build(), "Başkalarının özel mesajlarını gör");
 
             commands.register(Commands.literal("afk")
                     .requires(src -> src.getSender() instanceof Player)
@@ -106,25 +112,13 @@ public final class ChatCommands {
                     })
                     .build(), "AFK ol ya da AFK'dan çık");
 
-            registerChannel(commands, chat, "l", ChatChannel.LOCAL, "Yerel kanala yaz", List.of());
-            registerChannel(commands, chat, "t", "trade", "Ticaret kanalına yaz", List.of("ticaret"));
-            registerChannel(commands, chat, "yardım", "help", "Yardım kanalına yaz", List.of("yardim"));
-            registerChannel(commands, chat, "sc", "staff", "Yetkili kanalına yaz", List.of());
-        });
-    }
-
-    private static LiteralArgumentBuilder<CommandSourceStack> soundToggle(
-            String name, Notifications.Type type, String label, Notifications notifications, Messages messages) {
-        return Commands.literal(name).executes(ctx -> {
-            Player player = (Player) ctx.getSource().getSender();
-            boolean enabled = notifications.toggle(player, type);
-            player.sendMessage(messages.get(enabled ? "sound-on" : "sound-off", Placeholder.unparsed("type", label)));
-            return Command.SINGLE_SUCCESS;
+            // Diğer kanallar /sosyal'dan seçilir; yetkililer kanal değiştirmeden hızlıca yazabilsin.
+            registerChannel(commands, chat, "sc", "staff", "Yetkili kanalına yaz");
         });
     }
 
     private static void registerChannel(Commands commands, ChatListener chat, String name, String channelKey,
-                                        String description, List<String> aliases) {
+                                        String description) {
         ChatChannel channel = chat.channel(channelKey);
         if (channel == null) {
             return; // config'den silinmiş kanalın komutu da olmaz
@@ -137,7 +131,7 @@ public final class ChatCommands {
                             StringArgumentType.getString(ctx, "mesaj"));
                     return Command.SINGLE_SUCCESS;
                 }))
-                .build(), description, aliases);
+                .build(), description);
     }
 
     private static Player target(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

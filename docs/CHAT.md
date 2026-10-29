@@ -1,36 +1,41 @@
 # Sohbet sistemi — tasarım
 
 ## Temel
-- **Format:** `[kanal] [etiketler] İsim: mesaj`. `config.yml` → `chat.format`.
+- **Format:** `[kanal] [rozet] [etiketler] İsim: mesaj`. `config.yml` → `chat.format`.
   Etiketler (sınıf, seviye, lonca) RPG tarafından `TagProvider` ile gelir.
-- **Oyuncu kartı:** isme gelince bilgi kartı (seviye, lonca, oynama süresi), tıklayınca `/msg İsim ` hazır yazılır.
-- **Yetkili rozetleri:** `[Mod]`, `[Admin]` farklı renkte.
-- **Kanallar:**
+- **Oyuncu kartı:** isme gelince bilgi kartı, tıklayınca `/msg İsim ` hazır yazılır. Satırları sunucu sahibi
+  `chat.player-card` ile seçer; değerleri RPG tarafı `StatsProvider` ile verir (`SocialModule#setStatsProvider`).
+  Değeri olmayan satır görünmez.
+- **Yetkili rozetleri:** `[Admin]`, `[Mod]`, `[Rehber]`, izne bağlı (`chat.badges`).
+- **Kanallar:** oyuncu yazacağı kanalı `/sosyal` → Sohbet Kanalları'ndan seçer (sol tık), istemediği kanalı
+  gizler (sağ tık). Komut kalabalığı olmasın diye kanal başına komut yok; sadece yetkililer için `/sc`.
 
   | Kanal | Kim görür | Kısayol | Bekleme |
   |---|---|---|---|
   | Global | Herkes | varsayılan | 2 sn |
-  | Yerel | 64 blok | `!` öneki, `/l` | 2 sn |
-  | Ticaret | Herkes | `/t` | 30–60 sn |
-  | Yardım | Herkes, "Rehber" etiketi | `/yardım` | 2 sn |
-  | Parti / Lonca | Üyeler | `/p`, `/g` | — |
-  | Yetkili | Moderatörler | `/sc` | — |
+  | Yerel | 64 blok | `!` öneki (hangi kanal seçiliyse) | 2 sn |
+  | Ticaret | Herkes | panel | 45 sn |
+  | Yardım | Herkes | panel | 2 sn |
+  | Parti / Lonca | Üyeler | panel (parti/lonca gelince) | — |
+  | Yetkili | Moderatörler | panel, `/sc` | — |
 
-  Oyuncu kanalları susturabilir (ayarlar menüsüne bağlanır).
-- **Özel mesaj:** `/msg`, `/r`, `/ignore`, moderatörler için social spy.
+- **Özel mesaj:** `/msg` (`/tell`, `/w`), `/r`, `/ignore`, moderatörler için `/socialspy`.
 - **İlk giriş:** sunucuya ilk kez girene herkese karşılama mesajı.
 
 ## Etkileşim
-- **Eşya gösterme:** `[item]` → elindeki eşya, üstüne gelince özellikleri. Özellikler RPG item sisteminden.
-- **Etiketleme:** `@isim` (ses + vurgu), `@parti`.
-- **Konum paylaşma:** `[konum]` → tıklanabilir koordinat.
+- **Eşya gösterme:** `[i]` / `[item]` / `[eşya]` → elindeki eşya, üstüne gelince özellikleri, tıklayınca 3x3 pencere.
+- **Envanter gösterme:** `[inv]` / `[envanter]` → tıklayınca 5 sıralık salt okunur pencere: 3 sıra çanta,
+  1 sıra hızlı çubuk, en altta kask, göğüslük, pantolon, ayakkabı, ikinci el (boş zırh yuvasında gri cam).
+  `rpg.social.inventory.edit` izni olan yetkili tıklarsa oyuncunun gerçek envanteri canlı ve düzenlenebilir açılır.
+- **Etiketleme:** `@isim` (ses + vurgu + ekran yazısı, 10 sn bekleme), `@parti`.
+- **Konum paylaşma:** `[konum]` → koordinat ve bölge adı (`regions`), tıklayınca kopyalanır.
 - **İsim vurgusu:** biri adını yazarsa mesaj vurgulu görünür.
-- **Bildirim sesleri:** etiket ve özel mesaj sesi ayrı ayrı açılıp kapanır.
+- **Bildirimler:** etiket ve özel mesaj bildirimi `/sosyal` → Bildirimler'den ayrı ayrı açılıp kapanır.
 - **AFK:** hareketsizlerin ismi soluk görünür, özel mesaja "AFK" cevabı gider.
 - **Oyun olayı duyuruları:** nadir eşya, seviye atlama vb. RPG tarafının olaylarından gelir, oyuncu kapatabilir.
 
 ## Moderasyon
-- Spam (bekleme süresi, 30 sn içinde tekrar), büyük harf küçültme, küfür ve reklam filtresi.
+- Spam (bekleme süresi, 3 sn içinde tekrar), büyük harf küçültme, küfür ve reklam filtresi.
 - `/chat clear`, `/chat lock`, tek mesaj silme.
 - Mute entegrasyonu (kalan süre gösterilir), gizli susturma (shadow mute).
 - Yeni hesap kısıtlaması: ilk 10–15 dk global kanala yazamaz ve bağlantı paylaşamaz (oynama süresine bağlı).

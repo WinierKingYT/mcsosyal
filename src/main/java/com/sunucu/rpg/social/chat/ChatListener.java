@@ -1,6 +1,7 @@
 package com.sunucu.rpg.social.chat;
 
 import com.sunucu.rpg.core.Messages;
+import com.sunucu.rpg.social.StatsProvider;
 import com.sunucu.rpg.social.TagProvider;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -39,21 +40,27 @@ public final class ChatListener implements Listener {
     private final PrivateMessages privateMessages;
     private final Notifications notifications;
     private final Showcase showcase;
+    private final ChannelPreferences preferences;
+    private final PlayerCard card;
     private final String format;
     private final String localPrefix;
     private final Map<String, ChatChannel> channels = new LinkedHashMap<>();
     private final Map<String, Component> badges = new LinkedHashMap<>();
     private volatile TagProvider tagProvider = TagProvider.NONE;
+    private volatile StatsProvider statsProvider = StatsProvider.NONE;
     private volatile boolean locked;
 
     public ChatListener(JavaPlugin plugin, ConfigurationSection chat, Messages messages, ChatFilter filter,
-                        PrivateMessages privateMessages, Notifications notifications, Showcase showcase) {
+                        PrivateMessages privateMessages, Notifications notifications, Showcase showcase,
+                        ChannelPreferences preferences, PlayerCard card) {
         this.plugin = plugin;
         this.messages = messages;
         this.filter = filter;
         this.privateMessages = privateMessages;
         this.notifications = notifications;
         this.showcase = showcase;
+        this.preferences = preferences;
+        this.card = card;
         this.format = chat.getString("format", "<name>: <message>");
         this.localPrefix = chat.getString("local-prefix", "!");
         ConfigurationSection section = chat.getConfigurationSection("channels");
@@ -62,8 +69,8 @@ public final class ChatListener implements Listener {
                 channels.put(key, ChatChannel.fromConfig(key, section.getConfigurationSection(key)));
             }
         }
-        channels.putIfAbsent(ChatChannel.GLOBAL, new ChatChannel(ChatChannel.GLOBAL, Component.text("G"), 2000, null, 0));
-        channels.putIfAbsent(ChatChannel.LOCAL, new ChatChannel(ChatChannel.LOCAL, Component.text("Y"), 2000, null, 64));
+        channels.putIfAbsent(ChatChannel.GLOBAL, ChatChannel.fallback(ChatChannel.GLOBAL, 0));
+        channels.putIfAbsent(ChatChannel.LOCAL, ChatChannel.fallback(ChatChannel.LOCAL, 64));
         // Sıra önemli: config'deki ilk eşleşen rozet gösterilir.
         for (Map<?, ?> badge : chat.getMapList("badges")) {
             badges.put(String.valueOf(badge.get("permission")), Messages.parse(String.valueOf(badge.get("tag"))));
@@ -71,7 +78,7 @@ public final class ChatListener implements Listener {
     }
 
     /**
-     * Normal sohbet: global, ya da önek varsa yerel. İmzalı sohbet korunur.
+     * Normal sohbet: oyuncunun /sosyal'dan seçtiği kanala, önek varsa yerel kanala gider. İmzalı sohbet korunur.
      * Hata olursa mesaj engellenir: aksi halde Paper mesajı filtresiz yayınlardı.
      */
     @EventHandler(ignoreCancelled = true)
@@ -89,7 +96,7 @@ public final class ChatListener implements Listener {
         Player sender = event.getPlayer();
         String text = PlainTextComponentSerializer.plainText().serialize(event.message());
         boolean local = text.startsWith(localPrefix) && text.length() > localPrefix.length();
-        ChatChannel channel = channels.get(local ? ChatChannel.LOCAL : ChatChannel.GLOBAL);
+        ChatChannel channel = local ? channels.get(ChatChannel.LOCAL) : activeChannel(sender);
         String filtered = prepare(sender, channel, local ? text.substring(localPrefix.length()).strip() : text);
         Showcase.Shared shared = filtered == null ? null : showcase.prepare(sender, filtered);
         if (shared == null) {
@@ -101,10 +108,11 @@ public final class ChatListener implements Listener {
         event.message(Component.text(filtered));
         event.viewers().removeIf(viewer -> viewer instanceof Player player && !canSee(channel, sender, player));
         Component tags = tagProvider.tags(sender);
+        Component name = nameComponent(sender);
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         // Her izleyici kendi adını vurgulu görür, bu yüzden renderer izleyiciye göre çalışır.
         ChatRenderer renderer = (source, displayName, message, viewer) ->
-                render(sender, channel, tags, shared.apply(mentionMessage(filtered, mentions, viewer)));
+                render(sender, channel, tags, name, shared.apply(mentionMessage(filtered, mentions, viewer)));
         event.renderer(renderer);
 
         Set<Audience> viewers = Set.copyOf(event.viewers());
@@ -113,7 +121,7 @@ public final class ChatListener implements Listener {
     }
 
     /**
-     * Komutla belirli bir kanala gönderim (/t, /yardım, /sc, /l). Ana thread'den çağrılır.
+     * Komutla belirli bir kanala gönderim (/sc). Ana thread'den çağrılır.
      * Bu mesajlar sistem mesajı olarak gider, imzalı sohbet değildir.
      */
     public void sendToChannel(Player sender, String channelKey, String text) {
@@ -127,21 +135,38 @@ public final class ChatListener implements Listener {
             return;
         }
         Component tags = tagProvider.tags(sender);
+        Component name = nameComponent(sender);
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         Set<Player> viewers = new HashSet<>();
         for (Player viewer : Bukkit.getOnlinePlayers()) {
             if (canSee(channel, sender, viewer)) {
                 viewers.add(viewer);
-                viewer.sendMessage(render(sender, channel, tags,
+                viewer.sendMessage(render(sender, channel, tags, name,
                         shared.apply(mentionMessage(filtered, mentions, viewer))));
             }
         }
-        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, shared.apply(Component.text(filtered))));
+        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, name, shared.apply(Component.text(filtered))));
         notifyMentioned(sender, mentions, viewers::contains);
     }
 
     public ChatChannel channel(String key) {
         return channels.get(key);
+    }
+
+    /** /sosyal'da gösterilecek kanallar: izni olmayan kanal listelenmez. */
+    public List<ChatChannel> channelsFor(Player player) {
+        return channels.values().stream()
+                .filter(channel -> channel.permission() == null || player.hasPermission(channel.permission()))
+                .toList();
+    }
+
+    /** Seçtiği kanalın izni sonradan alındıysa global'e düşer. */
+    public ChatChannel activeChannel(Player player) {
+        ChatChannel channel = channels.get(preferences.active(player.getUniqueId()));
+        if (channel == null || channel.permission() != null && !player.hasPermission(channel.permission())) {
+            return channels.get(ChatChannel.GLOBAL);
+        }
+        return channel;
     }
 
     @EventHandler
@@ -166,6 +191,10 @@ public final class ChatListener implements Listener {
 
     public void setTagProvider(TagProvider provider) {
         this.tagProvider = provider == null ? TagProvider.NONE : provider;
+    }
+
+    public void setStatsProvider(StatsProvider provider) {
+        this.statsProvider = provider == null ? StatsProvider.NONE : provider;
     }
 
     /** Kilit, izin ve filtre kontrolü. Mesaj gönderilemezse oyuncuya sebebini söyler ve null döner. */
@@ -203,7 +232,10 @@ public final class ChatListener implements Listener {
     }
 
     private boolean canSee(ChatChannel channel, Player sender, Player viewer) {
-        if (privateMessages.isIgnoring(viewer, sender)) {
+        if (viewer.equals(sender)) {
+            return true;
+        }
+        if (privateMessages.isIgnoring(viewer, sender) || preferences.isHidden(viewer.getUniqueId(), channel.key())) {
             return false;
         }
         if (channel.permission() != null && !viewer.hasPermission(channel.permission())) {
@@ -264,18 +296,18 @@ public final class ChatListener implements Listener {
         return names;
     }
 
-    private Component render(Player sender, ChatChannel channel, Component tags, Component message) {
+    private Component render(Player sender, ChatChannel channel, Component tags, Component name, Component message) {
         return Messages.parse(format,
                 Placeholder.component("channel", channel.tag()),
                 Placeholder.component("badge", badgeFor(sender)),
                 Placeholder.component("tags", tags),
-                Placeholder.component("name", nameComponent(sender)),
+                Placeholder.component("name", name),
                 Placeholder.component("message", message));
     }
 
     private Component nameComponent(Player player) {
         return Component.text(player.getName())
-                .hoverEvent(messages.get("name-hover", Placeholder.unparsed("name", player.getName())))
+                .hoverEvent(card.render(player.getName(), statsProvider.stats(player)))
                 .clickEvent(ClickEvent.suggestCommand("/msg " + player.getName() + " "));
     }
 

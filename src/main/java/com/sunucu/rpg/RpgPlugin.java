@@ -1,6 +1,7 @@
 package com.sunucu.rpg;
 
 import com.sunucu.rpg.core.Module;
+import com.sunucu.rpg.core.gui.MenuListener;
 import com.sunucu.rpg.social.SocialModule;
 import java.util.List;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,6 +20,8 @@ public final class RpgPlugin extends JavaPlugin {
             getConfig().options().copyDefaults(true);
             saveConfig();
         }
+        // Ortak menü altyapısı (core.gui.Menu): tüm modüllerin pencerelerini korur.
+        getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         social = new SocialModule(this);
         // Her sistem buraya tek satır ekler, gerisi kendi paketinde durur.
         modules = List.of(social);

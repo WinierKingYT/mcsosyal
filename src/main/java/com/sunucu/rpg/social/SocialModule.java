@@ -2,10 +2,12 @@ package com.sunucu.rpg.social;
 
 import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.core.Module;
+import com.sunucu.rpg.social.chat.ChannelPreferences;
 import com.sunucu.rpg.social.chat.ChatCommands;
 import com.sunucu.rpg.social.chat.ChatFilter;
 import com.sunucu.rpg.social.chat.ChatListener;
 import com.sunucu.rpg.social.chat.Notifications;
+import com.sunucu.rpg.social.chat.PlayerCard;
 import com.sunucu.rpg.social.chat.PrivateMessages;
 import com.sunucu.rpg.social.chat.Showcase;
 import com.sunucu.rpg.world.Regions;
@@ -37,16 +39,24 @@ public final class SocialModule implements Module {
         // shortcut: bölgeler şimdilik sadece [konum] için burada yükleniyor; bölge giriş mesajları gelince world modülüne taşı.
         Regions regions = Regions.fromConfig(plugin.getConfig().getMapList("regions"), plugin.getLogger()::warning);
         Showcase showcase = new Showcase(config, messages, filter, regions);
-        chat = new ChatListener(plugin, config, messages, filter, privateMessages, notifications, showcase);
+        ChannelPreferences preferences = new ChannelPreferences();
+        PlayerCard card = new PlayerCard(config.getMapList("player-card"), messages);
+        chat = new ChatListener(plugin, config, messages, filter, privateMessages, notifications, showcase,
+                preferences, card);
+        SocialMenu menu = new SocialMenu(messages, chat, preferences, notifications);
 
         plugin.getServer().getPluginManager().registerEvents(chat, plugin);
-        plugin.getServer().getPluginManager().registerEvents(showcase, plugin);
         plugin.getServer().getPluginManager().registerEvents(afk, plugin);
         afk.start(plugin);
-        ChatCommands.register(plugin, chat, privateMessages, notifications, afk, messages);
+        ChatCommands.register(plugin, chat, privateMessages, afk, menu, messages);
     }
 
     public void setTagProvider(TagProvider provider) {
         chat.setTagProvider(provider);
+    }
+
+    /** RPG tarafı oyuncu kartındaki değerleri (seviye, sınıf, lonca...) buradan verir. */
+    public void setStatsProvider(StatsProvider provider) {
+        chat.setStatsProvider(provider);
     }
 }
