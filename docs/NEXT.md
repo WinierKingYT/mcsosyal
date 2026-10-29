@@ -62,13 +62,25 @@
 - 2026-10-29: Duyuru sistemi (`social.announce`): `announcements.tips` sırayla, 5 dk aralıkla (0: kapalı), tam
   MiniMessage (sahip yazar); oyuncu Bildirimler'den kapatır. `/duyuru` (`rpg.social.announce`): sohbet + ekran
   yazısı + ses; yetkili metni `Messages.parseFormatting` ile, tıklama/hover çalışmaz. Testler 56/56. Oyunda denenmedi.
+- 2026-10-29: Moderasyon 1. tur (`social.moderation`): `/mute` `/ban` <oyuncu> [süre] [sebep] (süre yoksa kalıcı,
+  çevrimdışı da), `/kick`, `/warn`, `/unmute`, `/unban`, `/geçmiş`, `/chatlog` (sohbet + özel mesaj kaydı, 30 gün),
+  `/şikayet` (60 sn bekleme, yetkiliye butonlu bildirim), `/şikayetler [kapat <no>]`. Ban girişten önce kontrol
+  edilir (kontrol edilemezse giriş reddedilir). Spam susturması da geçmişe yazılır. `/chat unmute` kaldırıldı.
+  `rpg.moderation.exempt` sadece çevrimiçi hedefte bilinir. DB yoksa moderasyon kapalı. Testler 70/70.
 
 ## Yol haritası (sahibin seçtiği sıra)
 1. [x] Arkadaş listesi
 2. [x] Oyuncu profili (`/profil`, kart + oynama süresi + arkadaş ekle butonu)
 3. [x] Duyuru sistemi
-4. [ ] Moderasyon (mute/ban/uyarı, `/report`, sohbet logu)
+4. [~] Moderasyon: 1. tur tamam (ceza, ban, geçmiş, sohbet kaydı, şikayet). 2. tur: gizli susturma, tek mesaj
+   silme, profilde yetkili butonları, uyarı birikince otomatik ceza, yeni hesap kısıtlaması
 5. [ ] Belki parti sistemi (arkadaşla sınır konuşulacak)
+
+## Oyunda doğrulanacak (moderasyon)
+- [ ] `/ban Ahmet 1m test`: oyuncu atılıyor, ekranda sebep/süre/yetkili; 1 dk sonra girebiliyor; `/unban`
+- [ ] `/mute` süreli ve kalıcı, çıkıp girince sürüyor; `/unmute` çevrimdışı oyuncuda da
+- [ ] `/geçmiş`, `/chatlog` (özel mesaj `msg>İsim` kanalıyla), `/şikayet` → yetkiliye butonlar, `/şikayetler kapat`
+- [ ] Bizim `/ban` `/kick` vanilla'yı eziyor mu (`/minecraft:ban` op için vanilla kalır)
 
 ## Oyunda doğrulanacak (duyuru)
 - [ ] İpucu 5 dk'da bir geliyor, `/sosyal`'a tıklama çalışıyor, Bildirimler'den kapatınca gelmiyor

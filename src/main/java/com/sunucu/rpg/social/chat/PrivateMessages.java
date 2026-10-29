@@ -22,6 +22,7 @@ public final class PrivateMessages {
     private final Notifications notifications;
     private final AfkTracker afk;
     private final ChatMutes mutes;
+    private volatile ChatLog chatLog = ChatLog.NONE;
     // shortcut: spy listesi bellekte, yeniden başlatınca kapanır (güvenli varsayılan).
     private final Set<UUID> spies = ConcurrentHashMap.newKeySet();
     private final SocialStore store;
@@ -72,7 +73,7 @@ public final class PrivateMessages {
     public void send(Player from, Player to, String text) {
         long muted = mutes.remainingMillis(from.getUniqueId(), System.currentTimeMillis());
         if (muted > 0 && !from.hasPermission(ChatListener.BYPASS)) {
-            from.sendMessage(messages.get("muted", ChatListener.minutes(muted)));
+            from.sendMessage(ChatListener.mutedMessage(messages, muted));
             return;
         }
         if (from.equals(to)) {
@@ -99,6 +100,12 @@ public final class PrivateMessages {
         lastPartner.put(from.getUniqueId(), to.getUniqueId());
         lastPartner.put(to.getUniqueId(), from.getUniqueId());
         spy(from, to, text);
+        chatLog.record(from, "msg>" + to.getName(), text);
+    }
+
+    /** Moderasyon bağlar: özel mesajlar da kaydedilir (taciz şikayetleri için). */
+    public void setChatLog(ChatLog log) {
+        this.chatLog = log == null ? ChatLog.NONE : log;
     }
 
     /** @return true ise social spy artık açık. */

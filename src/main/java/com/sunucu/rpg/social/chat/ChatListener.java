@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import net.kyori.adventure.audience.Audience;
@@ -57,6 +58,9 @@ public final class ChatListener implements Listener {
     private final Map<String, Component> badges = new LinkedHashMap<>();
     private volatile TagProvider tagProvider = TagProvider.NONE;
     private volatile StatsProvider statsProvider = StatsProvider.NONE;
+    private volatile ChatLog chatLog = ChatLog.NONE;
+    private volatile Consumer<Player> onAutoMute = player -> {
+    };
     private volatile boolean locked;
 
     public ChatListener(JavaPlugin plugin, ConfigurationSection chat, Messages messages, ChatFilter filter,
@@ -130,6 +134,7 @@ public final class ChatListener implements Listener {
 
         Set<Audience> viewers = Set.copyOf(event.viewers());
         // Ses ve ekran yazısı ana thread'de.
+        chatLog.record(sender, channel.key(), filtered);
         Bukkit.getScheduler().runTask(plugin, () -> notifyMentioned(sender, mentions, viewers::contains));
     }
 
@@ -159,6 +164,7 @@ public final class ChatListener implements Listener {
             }
         }
         Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, name, shared.apply(Component.text(filtered))));
+        chatLog.record(sender, channel.key(), filtered);
         notifyMentioned(sender, mentions, viewers::contains);
     }
 
@@ -182,6 +188,7 @@ public final class ChatListener implements Listener {
             }
         }
         Bukkit.getConsoleSender().sendMessage(line);
+        chatLog.record(sender, "me:" + channel.key(), filtered);
     }
 
     public ChatChannel channel(String key) {
@@ -226,6 +233,16 @@ public final class ChatListener implements Listener {
         this.tagProvider = provider == null ? TagProvider.NONE : provider;
     }
 
+    /** Moderasyon bağlar: her gönderilen mesaj kaydedilir. */
+    public void setChatLog(ChatLog log) {
+        this.chatLog = log == null ? ChatLog.NONE : log;
+    }
+
+    /** Moderasyon bağlar: spam susturması ceza geçmişine yazılsın. Ana thread'den çağrılmaz, async olabilir. */
+    public void setOnAutoMute(Consumer<Player> listener) {
+        this.onAutoMute = listener;
+    }
+
     public void setStatsProvider(StatsProvider provider) {
         this.statsProvider = provider == null ? StatsProvider.NONE : provider;
     }
@@ -263,6 +280,7 @@ public final class ChatListener implements Listener {
         // Bekleme/tekrar denemeleri sayılır: önce normal uyarı, sonra farklı renkte sert uyarı, en sonda susturma.
         if (result.strikes() >= spamMuteAfter) {
             mutes.mute(sender.getUniqueId(), now + spamMuteMillis);
+            onAutoMute.accept(sender);
             filter.clearStrikes(sender.getUniqueId());
             sender.sendMessage(messages.get("spam-muted", minutes(spamMuteMillis)));
             plugin.getLogger().info(sender.getName() + " spam yüzünden " + spamMuteMillis / MILLIS_PER_MINUTE
@@ -285,8 +303,14 @@ public final class ChatListener implements Listener {
         if (remaining <= 0) {
             return false;
         }
-        sender.sendMessage(messages.get("muted", minutes(remaining)));
+        sender.sendMessage(mutedMessage(messages, remaining));
         return true;
+    }
+
+    /** Kalıcı susturmada süre yazılmaz (dakikaya çevirmek taşardı). */
+    static Component mutedMessage(Messages messages, long remaining) {
+        return remaining >= ChatMutes.PERMANENT / 2 ? messages.get("muted-permanent")
+                : messages.get("muted", minutes(remaining));
     }
 
     static TagResolver minutes(long millis) {

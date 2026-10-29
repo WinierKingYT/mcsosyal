@@ -12,7 +12,8 @@ Nerede kaldığımız: [docs/NEXT.md](docs/NEXT.md). Sohbet tasarımı: [docs/CH
 
 ## Yapı
 - `RpgPlugin` tek ana sınıf. Her sistem bir `Module` ve `onEnable` içine tek satırla eklenir.
-- Herkes kendi paketinde çalışır: sosyal taraf `com.sunucu.rpg.social` (`chat`, `friends`), bölge ve atmosfer
+- Herkes kendi paketinde çalışır: sosyal taraf `com.sunucu.rpg.social` (`chat`, `friends`, `profile`, `announce`,
+  `moderation`), bölge ve atmosfer
   `com.sunucu.rpg.world`,
   ortak araçlar `com.sunucu.rpg.core`.
   Arkadaşın paketlerine (`combat`, `classes`, `quest`, `items` vb.) dokunma.

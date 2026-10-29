@@ -8,6 +8,7 @@ import com.sunucu.rpg.social.chat.ChannelPreferences;
 import com.sunucu.rpg.social.chat.ChatCommands;
 import com.sunucu.rpg.social.chat.ChatFilter;
 import com.sunucu.rpg.social.chat.ChatListener;
+import com.sunucu.rpg.social.chat.ChatLog;
 import com.sunucu.rpg.social.chat.ChatMutes;
 import com.sunucu.rpg.social.chat.LiveInventoryView;
 import com.sunucu.rpg.social.chat.Notifications;
@@ -18,6 +19,10 @@ import com.sunucu.rpg.social.chat.VanillaCommandGuard;
 import com.sunucu.rpg.social.friends.FriendActions;
 import com.sunucu.rpg.social.friends.FriendCommands;
 import com.sunucu.rpg.social.friends.Friends;
+import com.sunucu.rpg.social.moderation.Moderation;
+import com.sunucu.rpg.social.moderation.ModerationCommands;
+import com.sunucu.rpg.social.moderation.ModerationStore;
+import com.sunucu.rpg.social.moderation.Reports;
 import com.sunucu.rpg.social.profile.ProfileCommand;
 import com.sunucu.rpg.social.profile.ProfileMenu;
 import com.sunucu.rpg.world.Regions;
@@ -30,6 +35,8 @@ public final class SocialModule implements Module {
 
     // Arkadaş paneli tek sayfa: 45 kafa sığıyor.
     private static final int MAX_FRIENDS = 45;
+    private static final long MILLIS_PER_MINUTE = 60_000;
+    private static final long MILLIS_PER_DAY = 86_400_000;
 
     private final JavaPlugin plugin;
     private final Database database;
@@ -85,7 +92,48 @@ public final class SocialModule implements Module {
         announcements.start(plugin);
         plugin.getServer().getPluginManager().registerEvents(new LiveInventoryView.Protection(plugin), plugin);
         afk.start(plugin);
-        ChatCommands.register(plugin, chat, privateMessages, afk, menu, mutes, messages);
+        ChatCommands.register(plugin, chat, privateMessages, afk, menu, messages);
+        enableModeration(config, messages, mutes, privateMessages);
+    }
+
+    /** Moderasyon geçmişi ve yasaklar veritabanı ister; veritabanı yoksa moderasyon komutları da yok (SEVERE log). */
+    private void enableModeration(ConfigurationSection chatConfig, Messages messages, ChatMutes mutes,
+                                  PrivateMessages privateMessages) {
+        if (database == null) {
+            plugin.getLogger().severe("Veritabanı yok: moderasyon (ban, ceza geçmişi, şikayet, sohbet kaydı) kapalı");
+            return;
+        }
+        ModerationStore store;
+        try {
+            store = ModerationStore.create(database);
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Moderasyon tabloları kurulamadı, moderasyon kapalı", e);
+            return;
+        }
+        ConfigurationSection settings = plugin.getConfig().getConfigurationSection("moderation");
+        long chatLogDays = settings == null ? 30 : settings.getLong("chat-log-days", 30);
+        long reportCooldown = settings == null ? 60 : settings.getLong("report-cooldown-seconds", 60);
+        String defaultReason = messages.plain("mod-default-reason");
+
+        Moderation moderation = new Moderation(plugin, store, mutes, messages);
+        Reports reports = new Reports(moderation, store, messages, reportCooldown);
+        ChatLog log = (player, channel, text) ->
+                store.logChat(player.getUniqueId(), player.getName(), channel, text, System.currentTimeMillis());
+        chat.setChatLog(log);
+        privateMessages.setChatLog(log);
+        long spamMuteMillis = chatConfig.getLong("spam.mute-minutes", 5) * MILLIS_PER_MINUTE;
+        chat.setOnAutoMute(player -> moderation.recordAutoMute(player, spamMuteMillis));
+
+        plugin.getServer().getPluginManager().registerEvents(moderation, plugin);
+        plugin.getServer().getPluginManager().registerEvents(reports, plugin);
+        ModerationCommands.register(plugin, moderation, reports, messages, defaultReason);
+        store.purgeChatLog(System.currentTimeMillis() - chatLogDays * MILLIS_PER_DAY).whenComplete((deleted, error) -> {
+            if (error != null) {
+                plugin.getLogger().log(Level.WARNING, "Eski sohbet kayıtları silinemedi", error);
+            } else if (deleted > 0) {
+                plugin.getLogger().info(deleted + " eski sohbet kaydı silindi (" + chatLogDays + " günden eski)");
+            }
+        });
     }
 
     private SocialStore openStore() {

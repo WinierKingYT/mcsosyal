@@ -8,6 +8,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 
 /**
@@ -37,6 +38,11 @@ public final class Messages {
 
     public Component get(String key, TagResolver... resolvers) {
         return parse(templates.getOrDefault(key, "<red>eksik mesaj: " + key), resolvers);
+    }
+
+    /** Mesajın düz metni (renksiz); veritabanına yazılacak metinler için. */
+    public String plain(String key, TagResolver... resolvers) {
+        return PlainTextComponentSerializer.plainText().serialize(get(key, resolvers));
     }
 
     /** Çok satırlı metin (menü açıklamaları): config'de satırlar "\n" ile ayrılır. */

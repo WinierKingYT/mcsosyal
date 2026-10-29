@@ -25,9 +25,14 @@ import org.junit.jupiter.api.Test;
 /** config.yml bozuksa plugin hiç açılmaz; bunu sunucuya gitmeden yakala. */
 class ConfigTest {
 
-    // messages.get/lines("anahtar"), x ? "a" : "b" ve switch içindeki -> "anahtar" biçimleri.
+    // messages.get/lines/plain("anahtar"), x ? "a" : "b" ve switch içindeki -> "anahtar" biçimleri.
+    // Anahtardan sonra ")" ya da "," gelmeli: "mod-type-" + tür gibi birleştirilen önekler sayılmasın.
     private static final Pattern MESSAGE_KEY = Pattern.compile(
-            "messages\\.(?:get|lines)\\(\"([a-z-]+)\"|\\? \"([a-z-]+)\" : \"([a-z-]+)\"|-> \"([a-z-]+)\";");
+            "messages\\.(?:get|lines|plain)\\(\"([a-z-]+)\"(?=[,)])|\\? \"([a-z-]+)\" : \"([a-z-]+)\"|-> \"([a-z-]+)\";");
+    // Kodda birleştirilerek kurulan anahtarlar: regex göremez, elle kontrol edilir.
+    private static final List<String> COMPOSED_KEYS = List.of(
+            "mod-type-ban", "mod-type-mute", "mod-type-kick", "mod-type-warn",
+            "mod-status-active", "mod-status-expired", "mod-status-revoked", "mod-status-done");
 
     private static YamlConfiguration load() throws IOException, InvalidConfigurationException {
         try (Reader reader = new InputStreamReader(
@@ -71,6 +76,7 @@ class ConfigTest {
                 }
             }
         }
+        COMPOSED_KEYS.stream().filter(key -> !messages.contains(key)).forEach(missing::add);
         assertTrue(missing.isEmpty(), "config.yml → messages altında eksik: " + missing);
     }
 }

@@ -33,7 +33,7 @@ public final class ChatCommands {
     }
 
     public static void register(JavaPlugin plugin, ChatListener chat, PrivateMessages pm,
-                                AfkTracker afk, SocialMenu menu, ChatMutes mutes, Messages messages) {
+                                AfkTracker afk, SocialMenu menu, Messages messages) {
         plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             Commands commands = event.registrar();
 
@@ -54,15 +54,8 @@ public final class ChatCommands {
                         Bukkit.broadcast(messages.get(chat.toggleLock() ? "lock-on" : "lock-off", byName(ctx)));
                         return Command.SINGLE_SUCCESS;
                     }))
-                    .then(Commands.literal("unmute")
-                            .then(Commands.argument("oyuncu", ArgumentTypes.player()).executes(ctx -> {
-                                Player target = target(ctx);
-                                boolean was = mutes.unmute(target.getUniqueId());
-                                ctx.getSource().getSender().sendMessage(messages.get(was ? "unmuted" : "not-muted",
-                                        Placeholder.unparsed("name", target.getName())));
-                                return Command.SINGLE_SUCCESS;
-                            })))
-                    .build(), "Sohbeti temizle, kilitle ya da susturmayı kaldır");
+                    // Susturmayı kaldırmak için /unmute (moderasyon: geçmişe de yazar).
+                    .build(), "Sohbeti temizle ya da kilitle");
 
             commands.register(Commands.literal("msg")
                     .requires(src -> src.getSender() instanceof Player)

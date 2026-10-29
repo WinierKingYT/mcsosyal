@@ -3,6 +3,7 @@ package com.sunucu.rpg.social.profile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sunucu.rpg.core.Messages;
+import com.sunucu.rpg.core.Players;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -34,7 +35,7 @@ public final class ProfileCommand {
                                 .executes(ctx -> {
                                     Player viewer = (Player) ctx.getSource().getSender();
                                     String name = StringArgumentType.getString(ctx, "oyuncu");
-                                    OfflinePlayer target = find(name);
+                                    OfflinePlayer target = Players.find(name);
                                     if (target == null) {
                                         viewer.sendMessage(messages.get("profile-unknown",
                                                 Placeholder.unparsed("name", name)));
@@ -44,15 +45,5 @@ public final class ProfileCommand {
                                     return Command.SINGLE_SUCCESS;
                                 }))
                         .build(), "Oyuncu profili"));
-    }
-
-    /** Çevrimiçi ya da sunucunun önbelleğindeki oyuncu; hiç girmemiş isim için ağ isteği yapılmaz. */
-    private static OfflinePlayer find(String name) {
-        Player online = Bukkit.getPlayerExact(name);
-        if (online != null) {
-            return online;
-        }
-        OfflinePlayer cached = Bukkit.getOfflinePlayerIfCached(name);
-        return cached != null && cached.hasPlayedBefore() ? cached : null;
     }
 }

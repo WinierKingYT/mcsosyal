@@ -12,6 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class ChatMutes {
 
+    /** Kalıcı susturmanın bitiş zamanı. */
+    public static final long PERMANENT = Long.MAX_VALUE;
+
     private final SocialStore store;
     private final Map<UUID, Long> mutedUntil = new ConcurrentHashMap<>();
 

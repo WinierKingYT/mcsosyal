@@ -18,6 +18,33 @@ permissions:
   rpg.social.announce:
     description: Herkese duyuru yapma (/duyuru)
     default: op
+  rpg.moderation.mute:
+    description: /mute, /unmute
+    default: op
+  rpg.moderation.ban:
+    description: /ban, /unban
+    default: op
+  rpg.moderation.kick:
+    description: /kick
+    default: op
+  rpg.moderation.warn:
+    description: /warn
+    default: op
+  rpg.moderation.history:
+    description: /geçmiş (ceza geçmişi)
+    default: op
+  rpg.moderation.chatlog:
+    description: /chatlog (oyuncunun son mesajları, özel mesajlar dahil)
+    default: op
+  rpg.moderation.reports:
+    description: Şikayet bildirimleri ve /şikayetler
+    default: op
+  rpg.moderation.notify:
+    description: Verilen cezaların bildirimini görme
+    default: op
+  rpg.moderation.exempt:
+    description: Moderasyondan muaf (sadece konsol cezalandırabilir)
+    default: op
   rpg.social.inventory.edit:
     description: Sohbette paylaşılan [inv]'e tıklayınca oyuncunun gerçek envanterini açıp düzenleme
     default: op
