@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -69,9 +70,22 @@ public final class ChatListener implements Listener {
         }
     }
 
-    /** Normal sohbet: global, ya da önek varsa yerel. İmzalı sohbet korunur. */
+    /**
+     * Normal sohbet: global, ya da önek varsa yerel. İmzalı sohbet korunur.
+     * Hata olursa mesaj engellenir: aksi halde Paper mesajı filtresiz yayınlardı.
+     */
     @EventHandler(ignoreCancelled = true)
     public void onChat(AsyncChatEvent event) {
+        try {
+            handleChat(event);
+        } catch (RuntimeException e) {
+            event.setCancelled(true);
+            plugin.getLogger().log(Level.SEVERE, "Sohbet mesajı işlenemedi, mesaj engellendi", e);
+            event.getPlayer().sendMessage(messages.get("message-error"));
+        }
+    }
+
+    private void handleChat(AsyncChatEvent event) {
         Player sender = event.getPlayer();
         String text = PlainTextComponentSerializer.plainText().serialize(event.message());
         boolean local = text.startsWith(localPrefix) && text.length() > localPrefix.length();

@@ -68,6 +68,7 @@ messages:
   banned-word: "<red>Mesajın uygunsuz kelime içeriyor.</red>"
   advertisement: "<red>Sohbette sunucu adresi ya da bağlantı paylaşamazsın.</red>"
   chat-locked: "<red>Sohbet şu an kilitli.</red>"
+  message-error: "<red>Mesajın gönderilemedi, bir hata oluştu. Yetkililere bildir.</red>"
   lock-on: "<yellow>Sohbet <name> tarafından kilitlendi.</yellow>"
   lock-off: "<green>Sohbet kilidi <name> tarafından açıldı.</green>"
   cleared: "<gray>Sohbet <name> tarafından temizlendi.</gray>"

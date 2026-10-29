@@ -30,6 +30,8 @@
   (Paper click callback, 10 dk); `regions` ile [konum]'da bölge adı (`com.sunucu.rpg.world.Regions`); etiketlenince
   ekranda başlık (10 sn bekleme). `ChatListener` → `Showcase` ayrıldı. Config güncellemede eksik anahtarlar mevcut
   dosyaya eklenir (bozuk dosyanın üstüne yazılmaz). Testler 22/22. Oyunda denenmedi.
+- 2026-10-29: `[inv]` oyunda NPE verdi: boş yuvalar null, `List.of` null kabul etmiyor → `Arrays.asList`.
+  Hata anında Paper mesajı filtresiz yayınlamıştı; `onChat` artık hata olursa mesajı engelliyor ve logluyor.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj

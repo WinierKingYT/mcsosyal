@@ -4,6 +4,7 @@ import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.world.Regions;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +92,8 @@ public final class Showcase implements Listener {
         }
         if (ChatTokens.has(ChatTokens.INVENTORY, text)) {
             ItemStack[] layout = inventoryLayout(sender.getInventory());
-            if (!passesFilter(sender, List.of(layout))) {
+            // Boş yuvalar null; List.of null kabul etmez.
+            if (!passesFilter(sender, Arrays.asList(layout))) {
                 return null;
             }
             inventory = inventoryComponent(sender, layout);
