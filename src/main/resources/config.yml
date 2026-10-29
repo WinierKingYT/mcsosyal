@@ -1,0 +1,39 @@
+# Tüm yazılar MiniMessage formatındadır: https://docs.advntr.dev/minimessage/format
+# Oyuncunun yazdığı metin her zaman düz metin olarak eklenir, etiketleri çalışmaz.
+
+chat:
+  # <channel>, <tags>, <name>, <message> yer tutucuları kullanılabilir.
+  format: "<dark_gray>[<channel>]</dark_gray> <tags><white><name></white><gray>:</gray> <message>"
+  channels:
+    global: "<gold>G</gold>"
+    local: "<green>Y</green>"
+  # Mesajın başına bu karakter konunca yerel kanala gider.
+  local-prefix: "!"
+  local-radius: 64
+  cooldown-millis: 2000
+  # Bu kadar harften uzun ve çoğu büyük harfse mesaj küçültülür.
+  caps-min-letters: 6
+  caps-ratio: 0.7
+  # Normalleştirilmiş halleriyle eşleşir (ı→i, ş→s, tekrar eden harfler tek).
+  banned-words:
+    - aptal
+    - salak
+
+messages:
+  welcome: "<yellow><name></yellow> <gray>sunucuya ilk kez katıldı, hoş geldin!</gray>"
+  cooldown: "<red>Biraz yavaş, tekrar yazmadan önce bekle.</red>"
+  duplicate: "<red>Aynı mesajı tekrar gönderemezsin.</red>"
+  banned-word: "<red>Mesajın uygunsuz kelime içeriyor.</red>"
+  chat-locked: "<red>Sohbet şu an kilitli.</red>"
+  lock-on: "<yellow>Sohbet <name> tarafından kilitlendi.</yellow>"
+  lock-off: "<green>Sohbet kilidi <name> tarafından açıldı.</green>"
+  cleared: "<gray>Sohbet <name> tarafından temizlendi.</gray>"
+  msg-to: "<light_purple>[Sen → <name>]</light_purple> <message>"
+  msg-from: "<light_purple>[<name> → Sen]</light_purple> <message>"
+  msg-self: "<red>Kendine mesaj gönderemezsin.</red>"
+  msg-ignored: "<red>Bu oyuncu seni engellemiş.</red>"
+  reply-none: "<red>Cevap verecek kimse yok.</red>"
+  reply-offline: "<red>O oyuncu artık çevrimiçi değil.</red>"
+  ignore-on: "<gray><name> artık engellendi.</gray>"
+  ignore-off: "<gray><name> artık engellenmiyor.</gray>"
+  name-hover: "<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"

@@ -1,0 +1,14 @@
+name: RPG
+version: '0.1.0'
+main: com.sunucu.rpg.RpgPlugin
+api-version: '26.2'
+
+# Komutlar burada değil, her modül kendi komutunu kodda kaydeder (Brigadier).
+# Böylece iki kişi aynı dosyada çakışmaz.
+permissions:
+  rpg.social.chat.moderate:
+    description: Sohbeti temizleme ve kilitleme
+    default: op
+  rpg.social.chat.bypass:
+    description: Filtre, bekleme süresi ve kilide takılmama
+    default: op
