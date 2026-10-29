@@ -2,6 +2,7 @@ package com.sunucu.rpg.social.chat;
 
 import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.social.AfkTracker;
+import com.sunucu.rpg.social.SocialStore;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,17 +24,19 @@ public final class PrivateMessages {
     private final ChatMutes mutes;
     // shortcut: spy listesi bellekte, yeniden başlatınca kapanır (güvenli varsayılan).
     private final Set<UUID> spies = ConcurrentHashMap.newKeySet();
-    // shortcut: engellemeler bellekte, yeniden başlatınca silinir; veritabanı katmanı gelince kalıcı yap.
+    private final SocialStore store;
+    // Bellekte; değişince SocialStore'a yazılır, girişte load ile gelir.
     private final Map<UUID, Set<UUID>> ignores = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> lastPartner = new ConcurrentHashMap<>();
 
     public PrivateMessages(Messages messages, ChatFilter filter, Notifications notifications, AfkTracker afk,
-                           ChatMutes mutes) {
+                           ChatMutes mutes, SocialStore store) {
         this.messages = messages;
         this.filter = filter;
         this.notifications = notifications;
         this.afk = afk;
         this.mutes = mutes;
+        this.store = store;
     }
 
     public boolean isIgnoring(Player who, Player target) {
@@ -43,11 +46,18 @@ public final class PrivateMessages {
     /** @return true ise artık engelleniyor. */
     public boolean toggleIgnore(Player who, Player target) {
         Set<UUID> set = ignores.computeIfAbsent(who.getUniqueId(), id -> ConcurrentHashMap.newKeySet());
-        if (set.remove(target.getUniqueId())) {
-            return false;
+        boolean nowIgnored = !set.remove(target.getUniqueId());
+        if (nowIgnored) {
+            set.add(target.getUniqueId());
         }
-        set.add(target.getUniqueId());
-        return true;
+        store.setIgnored(who.getUniqueId(), target.getUniqueId(), nowIgnored);
+        return nowIgnored;
+    }
+
+    public void load(UUID player, Set<UUID> ignored) {
+        Set<UUID> set = ConcurrentHashMap.newKeySet();
+        set.addAll(ignored);
+        ignores.put(player, set);
     }
 
     public void send(Player from, Player to, String text) {
@@ -121,7 +131,9 @@ public final class PrivateMessages {
         send(from, partner, text);
     }
 
-    public void forget(UUID player) {
+    public void unload(UUID player) {
         lastPartner.remove(player);
+        ignores.remove(player);
+        spies.remove(player);
     }
 }

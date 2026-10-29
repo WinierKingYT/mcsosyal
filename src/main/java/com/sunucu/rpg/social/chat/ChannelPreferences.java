@@ -1,19 +1,38 @@
 package com.sunucu.rpg.social.chat;
 
+import com.sunucu.rpg.social.SocialStore;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Oyuncunun yazdığı kanal ve gizlediği kanallar (/sosyal → Kanallar). Bukkit'e bağımlı değil, test edilebilir.
- * Async sohbet thread'inden de okunur.
+ * Oyuncunun yazdığı kanal ve gizlediği kanallar (/sosyal → Kanallar). Bellekte tutulur, değişince SocialStore'a
+ * yazılır; girişte load ile gelir, çıkışta unload ile bırakılır. Async sohbet thread'inden de okunur.
  */
-// shortcut: tercihler bellekte, yeniden başlatınca herkes global'e döner; veritabanı gelince kalıcı yap.
 public final class ChannelPreferences {
 
+    private final SocialStore store;
     private final Map<UUID, String> active = new ConcurrentHashMap<>();
     private final Map<UUID, Set<String>> hidden = new ConcurrentHashMap<>();
+
+    public ChannelPreferences(SocialStore store) {
+        this.store = store;
+    }
+
+    public void load(UUID player, String activeChannel, Set<String> hiddenChannels) {
+        if (activeChannel != null) {
+            active.put(player, activeChannel);
+        }
+        Set<String> set = hiddenOf(player);
+        set.clear();
+        set.addAll(hiddenChannels);
+    }
+
+    public void unload(UUID player) {
+        active.remove(player);
+        hidden.remove(player);
+    }
 
     public String active(UUID player) {
         return active.getOrDefault(player, ChatChannel.GLOBAL);
@@ -22,7 +41,10 @@ public final class ChannelPreferences {
     /** Yazılan kanal gizli olamaz: seçilen kanal görünür olur. */
     public void setActive(UUID player, String channel) {
         active.put(player, channel);
-        hiddenOf(player).remove(channel);
+        store.saveSetting(player, SocialStore.ACTIVE_CHANNEL, channel);
+        if (hiddenOf(player).remove(channel)) {
+            saveHidden(player);
+        }
     }
 
     public boolean isHidden(UUID player, String channel) {
@@ -35,11 +57,16 @@ public final class ChannelPreferences {
             return false;
         }
         Set<String> set = hiddenOf(player);
-        if (set.remove(channel)) {
-            return false;
+        boolean nowHidden = !set.remove(channel);
+        if (nowHidden) {
+            set.add(channel);
         }
-        set.add(channel);
-        return true;
+        saveHidden(player);
+        return nowHidden;
+    }
+
+    private void saveHidden(UUID player) {
+        store.saveSetting(player, SocialStore.HIDDEN_CHANNELS, SocialStore.joinList(Set.copyOf(hiddenOf(player))));
     }
 
     private Set<String> hiddenOf(UUID player) {

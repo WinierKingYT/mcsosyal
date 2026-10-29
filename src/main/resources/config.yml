@@ -106,6 +106,9 @@ messages:
   muted: "<red>Susturuldun, <minutes> dakika kaldı.</red>"
   unmuted: "<green><name> artık konuşabilir.</green>"
   not-muted: "<gray><name> susturulmamış.</gray>"
+  # /me: seçili kanala gider, filtreden geçer.
+  emote: "<dark_gray>[<channel>]</dark_gray> <light_purple>* <name> <message></light_purple>"
+  command-disabled: "<red>Bu komut bu sunucuda kapalı.</red>"
   message-error: "<red>Mesajın gönderilemedi, bir hata oluştu. Yetkililere bildir.</red>"
   lock-on: "<yellow>Sohbet <name> tarafından kilitlendi.</yellow>"
   lock-off: "<green>Sohbet kilidi <name> tarafından açıldı.</green>"

@@ -1,8 +1,10 @@
 package com.sunucu.rpg.social.chat;
 
 import com.sunucu.rpg.core.Messages;
+import com.sunucu.rpg.social.SocialStore;
 import java.time.Duration;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,14 +25,17 @@ public final class Notifications {
             Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1500), Duration.ofMillis(400));
 
     private final Messages messages;
+    private final SocialStore store;
     private final long mentionCooldownMillis;
     private final Map<Type, Sound> sounds = new EnumMap<>(Type.class);
-    // shortcut: tercihler bellekte, yeniden başlatınca sıfırlanır; ayarlar menüsü ve veritabanı gelince kalıcı yap.
+    // Bellekte; değişince SocialStore'a yazılır, girişte load ile gelir.
     private final Map<Type, Set<UUID>> muted = new EnumMap<>(Type.class);
     private final Map<UUID, Long> lastMention = new ConcurrentHashMap<>();
 
-    public Notifications(ConfigurationSection soundConfig, Messages messages, long mentionCooldownSeconds) {
+    public Notifications(ConfigurationSection soundConfig, Messages messages, SocialStore store,
+                         long mentionCooldownSeconds) {
         this.messages = messages;
+        this.store = store;
         this.mentionCooldownMillis = mentionCooldownSeconds * 1000;
         sounds.put(Type.MENTION, sound(soundConfig, "mention", "entity.experience_orb.pickup"));
         sounds.put(Type.PRIVATE_MESSAGE, sound(soundConfig, "private-message", "block.note_block.pling"));
@@ -39,14 +44,32 @@ public final class Notifications {
         }
     }
 
-    /** @return true ise ses artık açık. */
+    /** @return true ise bildirim artık açık. */
     public boolean toggle(Player player, Type type) {
         Set<UUID> set = muted.get(type);
-        if (set.remove(player.getUniqueId())) {
-            return true;
+        boolean enabled = set.remove(player.getUniqueId());
+        if (!enabled) {
+            set.add(player.getUniqueId());
         }
-        set.add(player.getUniqueId());
-        return false;
+        Set<String> off = new HashSet<>();
+        for (Type each : Type.values()) {
+            if (muted.get(each).contains(player.getUniqueId())) {
+                off.add(each.name());
+            }
+        }
+        store.saveSetting(player.getUniqueId(), SocialStore.MUTED_NOTIFICATIONS, SocialStore.joinList(off));
+        return enabled;
+    }
+
+    /** Kayıtta bilinmeyen tür adı (eski sürümden kalma) atlanır. */
+    public void load(UUID player, Set<String> mutedTypes) {
+        for (Type type : Type.values()) {
+            if (mutedTypes.contains(type.name())) {
+                muted.get(type).add(player);
+            } else {
+                muted.get(type).remove(player);
+            }
+        }
     }
 
     public boolean isEnabled(Player player, Type type) {
@@ -80,8 +103,9 @@ public final class Notifications {
                 TITLE_TIMES));
     }
 
-    public void forget(UUID player) {
+    public void unload(UUID player) {
         lastMention.remove(player);
+        muted.values().forEach(set -> set.remove(player));
     }
 
     private static Sound sound(ConfigurationSection config, String path, String fallback) {

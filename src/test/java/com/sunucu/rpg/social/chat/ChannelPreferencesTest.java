@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.sunucu.rpg.social.SocialStore;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class ChannelPreferencesTest {
 
-    private final ChannelPreferences prefs = new ChannelPreferences();
+    private final ChannelPreferences prefs = new ChannelPreferences(SocialStore.NONE);
     private final UUID player = UUID.randomUUID();
 
     @Test
@@ -23,6 +25,16 @@ class ChannelPreferencesTest {
         assertTrue(prefs.isHidden(player, "trade"));
         assertFalse(prefs.toggleHidden(player, "trade"));
         assertFalse(prefs.isHidden(player, "trade"));
+    }
+
+    @Test
+    void loadRestoresSavedChoices() {
+        prefs.load(player, "trade", Set.of("help"));
+        assertEquals("trade", prefs.active(player));
+        assertTrue(prefs.isHidden(player, "help"));
+        prefs.unload(player);
+        assertEquals(ChatChannel.GLOBAL, prefs.active(player));
+        assertFalse(prefs.isHidden(player, "help"));
     }
 
     @Test

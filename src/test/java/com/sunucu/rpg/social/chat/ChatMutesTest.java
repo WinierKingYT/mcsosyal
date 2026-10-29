@@ -4,12 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.sunucu.rpg.social.SocialStore;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class ChatMutesTest {
 
-    private final ChatMutes mutes = new ChatMutes();
+    private final ChatMutes mutes = new ChatMutes(SocialStore.NONE);
     private final UUID player = UUID.randomUUID();
 
     @Test

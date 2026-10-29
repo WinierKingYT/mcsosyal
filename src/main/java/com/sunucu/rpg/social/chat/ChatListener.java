@@ -159,6 +159,28 @@ public final class ChatListener implements Listener {
         notifyMentioned(sender, mentions, viewers::contains);
     }
 
+    /**
+     * /me: Minecraft'ın kendi /me'si filtreyi atlatıyordu. Seçili kanala "* İsim eylem" olarak gider; filtre,
+     * bekleme süresi ve susturma normal sohbetle aynı. Ana thread'den çağrılır.
+     */
+    public void sendEmote(Player sender, String text) {
+        ChatChannel channel = activeChannel(sender);
+        String filtered = prepare(sender, channel, text);
+        if (filtered == null) {
+            return;
+        }
+        Component line = messages.get("emote",
+                Placeholder.component("channel", channel.tag()),
+                Placeholder.component("name", nameComponent(sender)),
+                Placeholder.unparsed("message", filtered));
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            if (canSee(channel, sender, viewer)) {
+                viewer.sendMessage(line);
+            }
+        }
+        Bukkit.getConsoleSender().sendMessage(line);
+    }
+
     public ChatChannel channel(String key) {
         return channels.get(key);
     }
@@ -190,8 +212,6 @@ public final class ChatListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         filter.forget(event.getPlayer().getUniqueId());
-        privateMessages.forget(event.getPlayer().getUniqueId());
-        notifications.forget(event.getPlayer().getUniqueId());
     }
 
     public boolean toggleLock() {

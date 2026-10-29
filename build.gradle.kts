@@ -19,6 +19,8 @@ dependencies {
 
     // config.yml testi için YamlConfiguration (yeni bağımlılık değil, aynı API test sınıf yolunda).
     testImplementation("io.papermc.paper:paper-api:$paperVersion.build.135-stable")
+    // Veritabanı testi için; sunucuda aynı sürüm Paper ile geliyor (run/libraries/org/xerial/sqlite-jdbc).
+    testImplementation("org.xerial:sqlite-jdbc:3.49.1.0")
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

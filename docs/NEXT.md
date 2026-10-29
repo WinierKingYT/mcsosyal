@@ -43,6 +43,10 @@
   susturma, `ChatMutes`, `/chat unmute`). Paylaşılan envanter bilerek o anın kopyası. 3x3 en küçük 9'luk pencere,
   altındaki oyuncu envanteri gizlenemez. Testler 35/35. Oyunda denenmedi.
 - 2026-10-29: `[i]` tıklama penceresi kaldırıldı (istek üzerine); bilgi hover'da tam görünüyor.
+- 2026-10-29: Veritabanı: `core.db.Database` (Paper'ın SQLite sürücüsü, tek arka plan thread'i, kapanırken
+  bekleyen yazımlar biter), `SocialStore`/`SqliteSocialStore`, `SocialData` (giriş öncesi async yükleme, çıkışta
+  bırakma). Bellekteki sınıflar değişince yazıyor. DB açılamazsa plugin bellekte çalışır (SEVERE log).
+  Vanilla `/me` filtreden geçiyor, `/teammsg` kapalı. Testler 39/39. Gerçek sunucuda denenmedi.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -57,7 +61,7 @@
 ## Sohbet — 2. sürüm
 - [x] Reklam filtresi (IP ve alan adı kalıpları) + test
 - [x] Ticaret, yardım ve yetkili kanalları, `/t` `/yardım` `/sc` `/l`, kanal başına bekleme süresi
-- [x] Kanal gizleme (`/sosyal`; kalıcı olması için veritabanı katmanı gerekir)
+- [x] Kanal gizleme (`/sosyal`, kalıcı)
 - [x] Etiketleme `@isim` + isim vurgusu + bildirim sesi (`@parti` parti sistemiyle birlikte)
 - [x] Eşya gösterme `[item]` / `[eşya]` (RPG eşyaları ItemStack olduğu sürece ek arayüz gerekmez)
 - [x] Konum paylaşma `[konum]`
@@ -71,13 +75,15 @@
 - [ ] Op olarak başkasının `[inv]`'i: aynı düzen, camlar ellenemiyor, değişiklik oyuncuya yansıyor, eşya kaybolmuyor
 - [ ] Spam: 5. engellenen denemede turuncu uyarı, 10.'da 5 dk susturma; `/chat unmute`
 - [ ] `/sosyal`: kanal seçince normal sohbet o kanala gidiyor mu, gizlenen kanal görünmüyor mu
-- [ ] Vanilla `/me` ve `/teammsg` filtreyi atlatıyor; kapatılmalı mı karar ver
+- [x] Vanilla `/me` filtreden geçiyor, `/teammsg` `/tm` kapalı
+- [ ] Sunucu açılışında `plugins/RPG/data.db` oluşuyor, SEVERE yok; çıkıp girince kanal seçimi, gizli kanallar,
+      bildirim ayarları, `/ignore` ve spam susturması korunuyor; sunucu yeniden başlayınca da
 - [ ] Etiketlenince ekran yazısı, 10 sn içinde ikinci etikette tekrar çıkmıyor mu
 - [ ] `[konum]` Başlangıç Köyü içinde bölge adını gösteriyor mu
 - [ ] Social spy (3 hesap)
 
 ## Moderasyon (sohbete bağlı)
-- [ ] Veritabanı katmanı (SQLite). Engellemeler (`/ignore`) kalıcı hale gelir.
+- [x] Veritabanı katmanı (SQLite): kanal seçimi, gizli kanallar, bildirimler, `/ignore`, susturmalar kalıcı
 - [ ] Mute + gizli susturma
 - [ ] Tek mesaj silme
 - [ ] Sohbet logu (30 gün)

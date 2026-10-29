@@ -21,6 +21,9 @@ Nerede kaldığımız: [docs/NEXT.md](docs/NEXT.md). Sohbet tasarımı: [docs/CH
   koda doğrudan erişilmez.
 - Menüler `core.gui.Menu` ile yapılır (iki taraf da kullanır): eşyalar alınamaz, buton işleri sonraki tick'te
   çalışır. Ayrı bir menü sistemi kurulmaz.
+- Kalıcı veri `core.db.Database` ile (tek SQLite dosyası, `RpgPlugin#database()`): oyun sırasında veri bellekte
+  durur, değişiklik arka planda yazılır, giriş öncesi (`AsyncPlayerPreLoginEvent`) yüklenir. Ana thread'de ve
+  async sohbette veritabanı beklenmez. Her modül kendi tablolarını kendi önekiyle kurar (ör. `social_`).
 - Oyuncu komutu eklemeden önce düşün: ayarlar `/sosyal` paneline gider, komut listesi kalabalıklaşmasın.
 - Tüm oyuncuya görünen yazılar `config.yml` → `messages` altında, MiniMessage formatında.
 

@@ -120,6 +120,23 @@ public final class ChatCommands {
                     })
                     .build(), "AFK ol ya da AFK'dan çık");
 
+            // Minecraft'ın kendi /me ve /teammsg'si sohbet filtresini atlatıyordu: /me filtreden geçer, takım sohbeti kapalı.
+            commands.register(Commands.literal("me")
+                    .requires(src -> src.getSender() instanceof Player)
+                    .then(Commands.argument("eylem", StringArgumentType.greedyString()).executes(ctx -> {
+                        chat.sendEmote((Player) ctx.getSource().getSender(), StringArgumentType.getString(ctx, "eylem"));
+                        return Command.SINGLE_SUCCESS;
+                    }))
+                    .build(), "Rol yap: * İsim eylem");
+            Command<CommandSourceStack> disabled = ctx -> {
+                ctx.getSource().getSender().sendMessage(messages.get("command-disabled"));
+                return Command.SINGLE_SUCCESS;
+            };
+            commands.register(Commands.literal("teammsg")
+                    .executes(disabled)
+                    .then(Commands.argument("mesaj", StringArgumentType.greedyString()).executes(disabled))
+                    .build(), "Kapalı", List.of("tm"));
+
             // Diğer kanallar /sosyal'dan seçilir; yetkililer kanal değiştirmeden hızlıca yazabilsin.
             registerChannel(commands, chat, "sc", "staff", "Yetkili kanalına yaz");
         });
