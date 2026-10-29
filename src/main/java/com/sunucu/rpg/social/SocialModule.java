@@ -5,6 +5,7 @@ import com.sunucu.rpg.core.Module;
 import com.sunucu.rpg.social.chat.ChatCommands;
 import com.sunucu.rpg.social.chat.ChatFilter;
 import com.sunucu.rpg.social.chat.ChatListener;
+import com.sunucu.rpg.social.chat.Notifications;
 import com.sunucu.rpg.social.chat.PrivateMessages;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,11 +24,12 @@ public final class SocialModule implements Module {
         ConfigurationSection config = plugin.getConfig().getConfigurationSection("chat");
         Messages messages = new Messages(plugin.getConfig().getConfigurationSection("messages"));
         ChatFilter filter = ChatFilter.fromConfig(config);
-        PrivateMessages privateMessages = new PrivateMessages(messages, filter);
-        chat = new ChatListener(config, messages, filter, privateMessages);
+        Notifications notifications = new Notifications(config.getConfigurationSection("sounds"));
+        PrivateMessages privateMessages = new PrivateMessages(messages, filter, notifications);
+        chat = new ChatListener(plugin, config, messages, filter, privateMessages, notifications);
 
         plugin.getServer().getPluginManager().registerEvents(chat, plugin);
-        ChatCommands.register(plugin, chat, privateMessages, messages);
+        ChatCommands.register(plugin, chat, privateMessages, notifications, messages);
     }
 
     public void setTagProvider(TagProvider provider) {

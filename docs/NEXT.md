@@ -7,6 +7,9 @@
   (`chat.channels`), ticaret/yardım/yetkili kanalları ve `/l` `/t` `/yardım` `/sc`, kanal başına bekleme süresi.
   `.gitattributes` eklendi. Testler 8/8. Kanal komutları sistem mesajı olarak gider (imzasız), normal sohbet imzalı kalır.
   Oyunda denenmedi: `/yardım` gibi Türkçe karakterli komut adı istemcide çalışıyor mu bak (yedek: `/yardim`).
+- 2026-10-29: Etiketleme. `@isim` herkese renkli görünür ve o kişiye ses gider; adın `@`'siz geçmesi de
+  sende vurgulanır (renderer izleyiciye göre çalışıyor). Özel mesaja ses eklendi. `/bildirim etiket|mesaj`
+  sesleri kapatır (bellekte). Testler 11/11. Oyunda denenmedi.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -23,7 +26,7 @@
 - [x] Ticaret, yardım ve yetkili kanalları, `/t` `/yardım` `/sc` `/l`, kanal başına bekleme süresi
 - [ ] Kanal susturma (oyuncu tercihi; kalıcı olması için veritabanı katmanı gerekir)
 - [ ] Yardım kanalında "Rehber" etiketi (yetkili rozetleriyle birlikte yapılabilir)
-- [ ] Etiketleme `@isim` + isim vurgusu + bildirim sesi
+- [x] Etiketleme `@isim` + isim vurgusu + bildirim sesi (`@parti` parti sistemiyle birlikte)
 - [ ] Eşya gösterme `[item]` (önce vanilla eşya hover'ı, sonra RPG item arayüzü)
 - [ ] Konum paylaşma `[konum]`
 - [ ] Yetkili rozetleri

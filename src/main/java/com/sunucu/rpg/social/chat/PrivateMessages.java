@@ -14,13 +14,15 @@ public final class PrivateMessages {
 
     private final Messages messages;
     private final ChatFilter filter;
+    private final Notifications notifications;
     // shortcut: engellemeler bellekte, yeniden başlatınca silinir; veritabanı katmanı gelince kalıcı yap.
     private final Map<UUID, Set<UUID>> ignores = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> lastPartner = new ConcurrentHashMap<>();
 
-    public PrivateMessages(Messages messages, ChatFilter filter) {
+    public PrivateMessages(Messages messages, ChatFilter filter, Notifications notifications) {
         this.messages = messages;
         this.filter = filter;
+        this.notifications = notifications;
     }
 
     public boolean isIgnoring(Player who, Player target) {
@@ -55,6 +57,7 @@ public final class PrivateMessages {
                 Placeholder.unparsed("name", to.getName()), Placeholder.unparsed("message", text)));
         to.sendMessage(messages.get("msg-from",
                 Placeholder.unparsed("name", from.getName()), Placeholder.unparsed("message", text)));
+        notifications.play(to, Notifications.Type.PRIVATE_MESSAGE);
         lastPartner.put(from.getUniqueId(), to.getUniqueId());
         lastPartner.put(to.getUniqueId(), from.getUniqueId());
     }

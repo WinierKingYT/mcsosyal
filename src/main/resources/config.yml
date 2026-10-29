@@ -26,6 +26,10 @@ chat:
       permission: rpg.social.chat.staff
   # Mesajın başına bu karakter konunca yerel kanala gider.
   local-prefix: "!"
+  # Minecraft ses anahtarları. Oyuncular /bildirim etiket|mesaj ile kapatabilir.
+  sounds:
+    mention: "entity.experience_orb.pickup"
+    private-message: "block.note_block.pling"
   # Bu kadar harften uzun ve çoğu büyük harfse mesaj küçültülür.
   caps-min-letters: 6
   caps-ratio: 0.7
@@ -55,4 +59,9 @@ messages:
   reply-offline: "<red>O oyuncu artık çevrimiçi değil.</red>"
   ignore-on: "<gray><name> artık engellendi.</gray>"
   ignore-off: "<gray><name> artık engellenmiyor.</gray>"
-  name-hover: "<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"
+  # @isim herkese böyle görünür; okuyanın kendi adıysa mention-self kullanılır.
+  mention: "<aqua><text></aqua>"
+  mention-self: "<yellow><bold><text></bold></yellow>"
+  sound-on: "<gray><type> sesi <green>açık</green>.</gray>"
+  sound-off: "<gray><type> sesi <red>kapalı</red>.</gray>"
+  name-hover:"<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"

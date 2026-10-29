@@ -4,9 +4,17 @@ import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.social.TagProvider;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -17,24 +25,30 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ChatListener implements Listener {
 
     public static final String BYPASS = "rpg.social.chat.bypass";
 
+    private final JavaPlugin plugin;
     private final Messages messages;
     private final ChatFilter filter;
     private final PrivateMessages privateMessages;
+    private final Notifications notifications;
     private final String format;
     private final String localPrefix;
     private final Map<String, ChatChannel> channels = new LinkedHashMap<>();
     private volatile TagProvider tagProvider = TagProvider.NONE;
     private volatile boolean locked;
 
-    public ChatListener(ConfigurationSection chat, Messages messages, ChatFilter filter, PrivateMessages privateMessages) {
+    public ChatListener(JavaPlugin plugin, ConfigurationSection chat, Messages messages, ChatFilter filter,
+                        PrivateMessages privateMessages, Notifications notifications) {
+        this.plugin = plugin;
         this.messages = messages;
         this.filter = filter;
         this.privateMessages = privateMessages;
+        this.notifications = notifications;
         this.format = chat.getString("format", "<name>: <message>");
         this.localPrefix = chat.getString("local-prefix", "!");
         ConfigurationSection section = chat.getConfigurationSection("channels");
@@ -64,7 +78,15 @@ public final class ChatListener implements Listener {
         event.message(Component.text(filtered));
         event.viewers().removeIf(viewer -> viewer instanceof Player player && !canSee(channel, sender, player));
         Component tags = tagProvider.tags(sender);
-        event.renderer(ChatRenderer.viewerUnaware((source, displayName, message) -> render(sender, channel, tags, message)));
+        List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
+        // Her izleyici kendi adını vurgulu görür, bu yüzden renderer izleyiciye göre çalışır.
+        ChatRenderer renderer = (source, displayName, message, viewer) ->
+                render(sender, channel, tags, mentionMessage(filtered, mentions, viewer));
+        event.renderer(renderer);
+
+        Set<Audience> viewers = Set.copyOf(event.viewers());
+        // Ses ana thread'de çalınır.
+        Bukkit.getScheduler().runTask(plugin, () -> notifyMentioned(sender, mentions, viewers::contains));
     }
 
     /**
@@ -80,13 +102,17 @@ public final class ChatListener implements Listener {
         if (filtered == null) {
             return;
         }
-        Component line = render(sender, channel, tagProvider.tags(sender), Component.text(filtered));
+        Component tags = tagProvider.tags(sender);
+        List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
+        Set<Player> viewers = new HashSet<>();
         for (Player viewer : Bukkit.getOnlinePlayers()) {
             if (canSee(channel, sender, viewer)) {
-                viewer.sendMessage(line);
+                viewers.add(viewer);
+                viewer.sendMessage(render(sender, channel, tags, mentionMessage(filtered, mentions, viewer)));
             }
         }
-        Bukkit.getConsoleSender().sendMessage(line);
+        Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags, Component.text(filtered)));
+        notifyMentioned(sender, mentions, viewers::contains);
     }
 
     public ChatChannel channel(String key) {
@@ -155,6 +181,48 @@ public final class ChatListener implements Listener {
             return false;
         }
         return channel.radius() <= 0 || inRange(sender, viewer, channel.radius());
+    }
+
+    /** "@isim" herkese renkli görünür; izleyicinin kendi adı (@'li ya da @'siz) ona vurgulu görünür. */
+    private Component mentionMessage(String text, List<Mentions.Span> mentions, Audience viewer) {
+        if (mentions.isEmpty()) {
+            return Component.text(text);
+        }
+        String viewerName = viewer instanceof Player player ? player.getName() : null;
+        TextComponent.Builder builder = Component.text();
+        int position = 0;
+        for (Mentions.Span span : mentions) {
+            builder.append(Component.text(text.substring(position, span.start())));
+            String part = text.substring(span.start(), span.end());
+            if (span.name().equals(viewerName)) {
+                builder.append(messages.get("mention-self", Placeholder.unparsed("text", part)));
+            } else if (span.explicit()) {
+                builder.append(messages.get("mention", Placeholder.unparsed("text", part)));
+            } else {
+                builder.append(Component.text(part));
+            }
+            position = span.end();
+        }
+        return builder.append(Component.text(text.substring(position))).build();
+    }
+
+    /** Ana thread'den çağrılır. Sadece "@isim" ile etiketlenen ve mesajı gören oyunculara ses gider. */
+    private void notifyMentioned(Player sender, List<Mentions.Span> mentions, Predicate<Player> sawMessage) {
+        mentions.stream()
+                .filter(Mentions.Span::explicit)
+                .map(span -> Bukkit.getPlayerExact(span.name()))
+                .filter(player -> player != null && !player.equals(sender) && sawMessage.test(player))
+                .distinct()
+                .forEach(player -> notifications.play(player, Notifications.Type.MENTION));
+    }
+
+    // shortcut: çevrimiçi liste async thread'den okunuyor (Paper'da kopya döner); sorun çıkarsa ana thread'de önbelleğe al.
+    private static Map<String, String> onlineNames() {
+        Map<String, String> names = new HashMap<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            names.put(player.getName().toLowerCase(Locale.ROOT), player.getName());
+        }
+        return names;
     }
 
     private Component render(Player sender, ChatChannel channel, Component tags, Component message) {

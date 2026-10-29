@@ -2,6 +2,7 @@ package com.sunucu.rpg.social.chat;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.sunucu.rpg.core.Messages;
@@ -18,7 +19,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** /chat clear|lock, /msg, /r, /ignore ve kanal komutları (/l, /t, /yardım, /sc). */
+/** /chat clear|lock, /msg, /r, /ignore, /bildirim ve kanal komutları (/l, /t, /yardım, /sc). */
 public final class ChatCommands {
 
     public static final String MODERATE = "rpg.social.chat.moderate";
@@ -27,7 +28,8 @@ public final class ChatCommands {
     private ChatCommands() {
     }
 
-    public static void register(JavaPlugin plugin, ChatListener chat, PrivateMessages pm, Messages messages) {
+    public static void register(JavaPlugin plugin, ChatListener chat, PrivateMessages pm,
+                                Notifications notifications, Messages messages) {
         plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             Commands commands = event.registrar();
 
@@ -80,10 +82,26 @@ public final class ChatCommands {
                     }))
                     .build(), "Bir oyuncuyu engelle ya da engeli kaldır", List.of("engelle"));
 
-            registerChannel(commands, chat, "l", ChatChannel.LOCAL, "Yerel kanala yaz", List.of());
+            commands.register(Commands.literal("bildirim")
+                    .requires(src -> src.getSender() instanceof Player)
+                    .then(soundToggle("etiket", Notifications.Type.MENTION, "Etiket", notifications, messages))
+                    .then(soundToggle("mesaj", Notifications.Type.PRIVATE_MESSAGE, "Özel mesaj", notifications, messages))
+                    .build(), "Bildirim seslerini aç ya da kapat");
+
+            registerChannel(commands, chat, "l",ChatChannel.LOCAL, "Yerel kanala yaz", List.of());
             registerChannel(commands, chat, "t", "trade", "Ticaret kanalına yaz", List.of("ticaret"));
             registerChannel(commands, chat, "yardım", "help", "Yardım kanalına yaz", List.of("yardim"));
             registerChannel(commands, chat, "sc", "staff", "Yetkili kanalına yaz", List.of());
+        });
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> soundToggle(
+            String name, Notifications.Type type, String label, Notifications notifications, Messages messages) {
+        return Commands.literal(name).executes(ctx -> {
+            Player player = (Player) ctx.getSource().getSender();
+            boolean enabled = notifications.toggle(player, type);
+            player.sendMessage(messages.get(enabled ? "sound-on" : "sound-off", Placeholder.unparsed("type", label)));
+            return Command.SINGLE_SUCCESS;
         });
     }
 
