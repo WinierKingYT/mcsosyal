@@ -47,6 +47,10 @@
   bekleyen yazımlar biter), `SocialStore`/`SqliteSocialStore`, `SocialData` (giriş öncesi async yükleme, çıkışta
   bırakma). Bellekteki sınıflar değişince yazıyor. DB açılamazsa plugin bellekte çalışır (SEVERE log).
   Vanilla `/me` filtreden geçiyor, `/teammsg` kapalı. Testler 39/39. Gerçek sunucuda denenmedi.
+- 2026-10-29: Güvenlik incelemesi: aynı hesapla ikinci girişte eski oturumun çıkışı yeni oturumun verisini
+  (susturma dahil) siliyordu → `pendingLogins`. Veri okunamazsa oyuncu artık geri çevriliyor (varsayılanla
+  girip susturmayı atlatmasın, ayarlarının üstüne yazılmasın). `/minecraft:me`, `/minecraft:msg` vb. filtreyi
+  atlatıyordu → `VanillaCommandGuard`. Testler 41/41.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj

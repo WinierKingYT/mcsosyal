@@ -13,6 +13,7 @@ import com.sunucu.rpg.social.chat.Notifications;
 import com.sunucu.rpg.social.chat.PlayerCard;
 import com.sunucu.rpg.social.chat.PrivateMessages;
 import com.sunucu.rpg.social.chat.Showcase;
+import com.sunucu.rpg.social.chat.VanillaCommandGuard;
 import com.sunucu.rpg.world.Regions;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -54,11 +55,13 @@ public final class SocialModule implements Module {
         chat = new ChatListener(plugin, config, messages, filter, privateMessages, notifications, showcase,
                 preferences, card, mutes);
         SocialMenu menu = new SocialMenu(messages, chat, preferences, notifications);
-        SocialData data = new SocialData(store, plugin.getLogger(), preferences, notifications, privateMessages, mutes);
+        SocialData data = new SocialData(store, plugin.getLogger(), messages, preferences, notifications,
+                privateMessages, mutes);
 
         plugin.getServer().getPluginManager().registerEvents(data, plugin);
         data.loadOnline();
         plugin.getServer().getPluginManager().registerEvents(chat, plugin);
+        plugin.getServer().getPluginManager().registerEvents(new VanillaCommandGuard(messages), plugin);
         plugin.getServer().getPluginManager().registerEvents(afk, plugin);
         plugin.getServer().getPluginManager().registerEvents(new LiveInventoryView.Protection(plugin), plugin);
         afk.start(plugin);
