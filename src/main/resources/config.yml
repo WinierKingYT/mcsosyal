@@ -63,6 +63,9 @@ chat:
       line: "<gray>Seviye: <white><value></white></gray>"
     - stat: guild
       line: "<gray>Lonca: <white><value></white></gray>"
+    # playtime bizden gelir (Minecraft'ın oynama süresi istatistiği), RPG tarafına gerek yok.
+    - stat: playtime
+      line: "<gray>Oynama süresi: <white><value></white></gray>"
   # Mesajın başına bu karakter konunca, seçili kanal ne olursa olsun yerel kanala gider.
   local-prefix: "!"
   # Minecraft ses anahtarları. Oyuncular /sosyal → Bildirimler'den kapatabilir.
@@ -158,7 +161,7 @@ messages:
   msg-afk: "<gray><name> şu an AFK, mesajını sonra görebilir.</gray>"
   # Oyuncu kartının başlığı ve en alttaki ipucu (satırlar chat.player-card).
   player-card-header: "<yellow><name></yellow>"
-  name-hover: "<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"
+  name-hover: "<gray>Tıkla: <white><name></white><gray> profilini aç</gray>"
 
   # /sosyal paneli. Çok satırlı açıklamalarda satırlar \n ile ayrılır.
   menu-title: "Sosyal"
@@ -176,7 +179,7 @@ messages:
   friend-head: "<yellow><name></yellow>"
   friend-online: "<green>● Çevrimiçi</green>"
   friend-offline: "<gray>● Çevrimdışı</gray>"
-  friend-click-message: "<gray>Sol tık: <white>mesaj yaz</white></gray>"
+  friend-click-profile: "<gray>Sol tık: <white>profili aç</white></gray>"
   friend-click-remove: "<gray>Shift + sağ tık: <red>arkadaşlıktan çıkar</red></gray>"
   friend-requests: "<gold>Arkadaşlık İstekleri (<count>)</gold>"
   friend-requests-lore: "<gray>Sana gelen istekleri gör."
@@ -201,6 +204,28 @@ messages:
   friend-no-request: "<red><name> oyuncusundan bekleyen istek yok.</red>"
   friend-not-friends: "<red><name> arkadaşın değil.</red>"
   friend-unknown: "<red>Listende <name> diye biri yok.</red>"
+  # Oyuncu profili (/profil, sohbette isme tıklayınca).
+  profile-title: "<name> - Profil"
+  profile-head: "<yellow><name></yellow>"
+  profile-own: "<dark_gray>Bu senin profilin."
+  profile-playtime: "<gold>Oynama Süresi</gold>"
+  profile-playtime-total: "<gray>Toplam: <white><time></white>"
+  profile-first-joined: "<gray>İlk giriş: <white><date></white>"
+  profile-online-now: "<green>● Şu an çevrimiçi</green>"
+  profile-last-seen: "<gray>Son görülme: <white><date></white>\n<dark_gray>(<ago> önce)"
+  profile-message: "<light_purple>Mesaj Yaz</light_purple>"
+  profile-message-lore: "<gray>Tıkla: özel mesaj yaz."
+  profile-offline-lore: "<gray>Çevrimdışı oyuncuya mesaj atılamaz."
+  profile-friend: "<green>Arkadaşlık</green>"
+  profile-friends-lore: "<green>Arkadaşsınız.</green>\n<gray>Shift + sağ tık: <red>arkadaşlıktan çıkar</red></gray>"
+  profile-incoming-lore: "<gold>Sana arkadaşlık isteği gönderdi.</gold>\n<gray>Sol tık: <green>kabul et</green></gray>\n<gray>Sağ tık: <red>reddet</red></gray>"
+  profile-outgoing-lore: "<gray>İstek gönderildi, cevap bekleniyor."
+  profile-add-lore: "<gray>Tıkla: <white>arkadaşlık isteği gönder</white></gray>"
+  profile-add-offline-lore: "<gray>Çevrimdışı oyuncuya istek gönderilemez."
+  profile-ignore: "<red>Engelle</red>"
+  profile-not-ignored-lore: "<gray>Tıkla: bu oyuncunun mesajlarını\n<gray>ve sohbetini görme."
+  profile-ignored-lore: "<red>Engellendi.</red>\n<gray>Tıkla: <white>engeli kaldır</white></gray>"
+  profile-unknown: "<red><name> diye bir oyuncu bu sunucuya hiç girmemiş.</red>"
   friend-joined: "<green>▶</green> <gray>Arkadaşın <white><name></white><gray> oyuna girdi.</gray>"
   friend-left: "<red>◀</red> <gray>Arkadaşın <white><name></white><gray> oyundan çıktı.</gray>"
   friend-requests-waiting: "<gold><count> bekleyen arkadaşlık isteğin var.</gold> <gray>Görmek için tıkla.</gray>"

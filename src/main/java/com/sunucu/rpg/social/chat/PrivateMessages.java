@@ -40,17 +40,26 @@ public final class PrivateMessages {
     }
 
     public boolean isIgnoring(Player who, Player target) {
-        return ignores.getOrDefault(who.getUniqueId(), Set.of()).contains(target.getUniqueId());
+        return isIgnoring(who.getUniqueId(), target.getUniqueId());
+    }
+
+    public boolean isIgnoring(UUID who, UUID target) {
+        return ignores.getOrDefault(who, Set.of()).contains(target);
     }
 
     /** @return true ise artık engelleniyor. */
     public boolean toggleIgnore(Player who, Player target) {
-        Set<UUID> set = ignores.computeIfAbsent(who.getUniqueId(), id -> ConcurrentHashMap.newKeySet());
-        boolean nowIgnored = !set.remove(target.getUniqueId());
+        return toggleIgnore(who.getUniqueId(), target.getUniqueId());
+    }
+
+    /** Engellenen çevrimdışı olabilir (profil panelinden). */
+    public boolean toggleIgnore(UUID who, UUID target) {
+        Set<UUID> set = ignores.computeIfAbsent(who, id -> ConcurrentHashMap.newKeySet());
+        boolean nowIgnored = !set.remove(target);
         if (nowIgnored) {
-            set.add(target.getUniqueId());
+            set.add(target);
         }
-        store.setIgnored(who.getUniqueId(), target.getUniqueId(), nowIgnored);
+        store.setIgnored(who, target, nowIgnored);
         return nowIgnored;
     }
 

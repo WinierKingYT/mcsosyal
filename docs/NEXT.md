@@ -55,13 +55,21 @@
   shift+sağ tık sil), istekler paneli, sohbette tıklanabilir [Kabul]/[Reddet], karşılıklı istek = arkadaşlık,
   giriş/çıkış bildirimi (Bildirimler'den kapatılır), en fazla 45. Veritabanında `social_friends` (iki yönlü,
   transaction) ve `social_friend_requests`. Testler 49/49. Oyunda denenmedi.
+- 2026-10-29: Oyuncu profili (`social.profile`): `/profil [isim]` (çevrimdışı da), sohbette isme tıklayınca açılır.
+  Kafa + kart satırları, oynama süresi (Minecraft `PLAY_ONE_MINUTE`, AFK dahil), ilk giriş, son görülme, mesaj,
+  arkadaşlık (duruma göre ekle/kabul/reddet/çıkar), engelle. Kartta `playtime` satırı. Arkadaş panelinde sol tık
+  profili açar. Testler 52/52. Oyunda denenmedi.
 
 ## Yol haritası (sahibin seçtiği sıra)
 1. [x] Arkadaş listesi
-2. [ ] Oyuncu profili (`/profil`, kart + oynama süresi + arkadaş ekle butonu)
+2. [x] Oyuncu profili (`/profil`, kart + oynama süresi + arkadaş ekle butonu)
 3. [ ] Duyuru sistemi
 4. [ ] Moderasyon (mute/ban/uyarı, `/report`, sohbet logu)
 5. [ ] Belki parti sistemi (arkadaşla sınır konuşulacak)
+
+## Oyunda doğrulanacak (profil)
+- [ ] Sohbette isme tıklayınca profil açılıyor mu; `/profil` çevrimdışı oyuncuda süre ve son görülme doğru mu
+- [ ] Profilden arkadaş ekleme/kabul/çıkarma ve engelleme çalışıyor mu
 
 ## Oyunda doğrulanacak (arkadaşlar)
 - [ ] İstek, [Kabul]/[Reddet] butonları (Türkçe `ş`'li komut tıklamada çalışıyor mu), karşılıklı istek

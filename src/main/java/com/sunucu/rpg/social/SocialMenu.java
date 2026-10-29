@@ -10,6 +10,7 @@ import com.sunucu.rpg.social.chat.Notifications;
 import com.sunucu.rpg.social.friends.FriendActions;
 import com.sunucu.rpg.social.friends.Friends;
 import com.sunucu.rpg.social.friends.FriendsMenu;
+import com.sunucu.rpg.social.profile.ProfileMenu;
 import java.util.ArrayList;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -43,12 +44,12 @@ public final class SocialMenu {
     private final FriendsMenu friendsMenu;
 
     public SocialMenu(Messages messages, ChatListener chat, ChannelPreferences preferences, Notifications notifications,
-                      Friends friends, FriendActions friendActions) {
+                      Friends friends, FriendActions friendActions, ProfileMenu profile) {
         this.messages = messages;
         this.chat = chat;
         this.preferences = preferences;
         this.notifications = notifications;
-        this.friendsMenu = new FriendsMenu(friends, friendActions, messages, this::openMain);
+        this.friendsMenu = new FriendsMenu(friends, friendActions, messages, this::openMain, profile::open);
     }
 
     public FriendsMenu friendsMenu() {

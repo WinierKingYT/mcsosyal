@@ -3,7 +3,7 @@
 ## Temel
 - **Format:** `[kanal] [rozet] [etiketler] İsim: mesaj`. `config.yml` → `chat.format`.
   Etiketler (sınıf, seviye, lonca) RPG tarafından `TagProvider` ile gelir.
-- **Oyuncu kartı:** isme gelince bilgi kartı, tıklayınca `/msg İsim ` hazır yazılır. Satırları sunucu sahibi
+- **Oyuncu kartı:** isme gelince bilgi kartı (oynama süresi dahil), tıklayınca oyuncu profili (`/profil`) açılır. Satırları sunucu sahibi
   `chat.player-card` ile seçer; değerleri RPG tarafı `StatsProvider` ile verir (`SocialModule#setStatsProvider`).
   Değeri olmayan satır görünmez.
 - **Yetkili rozetleri:** `[Admin]`, `[Mod]`, `[Rehber]`, izne bağlı (`chat.badges`).

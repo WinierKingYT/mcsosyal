@@ -53,6 +53,12 @@ public final class Friends {
         return friends.getOrDefault(a, Set.of()).contains(b);
     }
 
+    /** from, to'ya istek gönderdi ve cevap bekliyor mu. */
+    public boolean isRequested(UUID from, UUID to) {
+        return outgoing.getOrDefault(from, Set.of()).contains(to)
+                || incoming.getOrDefault(to, Set.of()).contains(from);
+    }
+
     public int maxFriends() {
         return maxFriends;
     }

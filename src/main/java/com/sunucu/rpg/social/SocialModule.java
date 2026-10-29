@@ -17,6 +17,8 @@ import com.sunucu.rpg.social.chat.VanillaCommandGuard;
 import com.sunucu.rpg.social.friends.FriendActions;
 import com.sunucu.rpg.social.friends.FriendCommands;
 import com.sunucu.rpg.social.friends.Friends;
+import com.sunucu.rpg.social.profile.ProfileCommand;
+import com.sunucu.rpg.social.profile.ProfileMenu;
 import com.sunucu.rpg.world.Regions;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -62,7 +64,8 @@ public final class SocialModule implements Module {
                 preferences, card, mutes);
         Friends friends = new Friends(store, Math.min(config.getInt("friends.max", 45), MAX_FRIENDS));
         FriendActions friendActions = new FriendActions(friends, messages, notifications);
-        SocialMenu menu = new SocialMenu(messages, chat, preferences, notifications, friends, friendActions);
+        ProfileMenu profile = new ProfileMenu(messages, friends, friendActions, privateMessages, card, chat::stats);
+        SocialMenu menu = new SocialMenu(messages, chat, preferences, notifications, friends, friendActions, profile);
         SocialData data = new SocialData(store, plugin.getLogger(), messages, preferences, notifications,
                 privateMessages, mutes, friends);
 
@@ -73,6 +76,7 @@ public final class SocialModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(afk, plugin);
         plugin.getServer().getPluginManager().registerEvents(friendActions, plugin);
         FriendCommands.register(plugin, friends, friendActions, menu.friendsMenu(), messages);
+        ProfileCommand.register(plugin, profile, messages);
         plugin.getServer().getPluginManager().registerEvents(new LiveInventoryView.Protection(plugin), plugin);
         afk.start(plugin);
         ChatCommands.register(plugin, chat, privateMessages, afk, menu, mutes, messages);

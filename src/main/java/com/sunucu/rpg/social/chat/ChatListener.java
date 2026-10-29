@@ -1,8 +1,11 @@
 package com.sunucu.rpg.social.chat;
 
+import com.sunucu.rpg.core.Durations;
 import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.social.StatsProvider;
 import com.sunucu.rpg.social.TagProvider;
+import com.sunucu.rpg.social.profile.Playtime;
+import com.sunucu.rpg.social.profile.ProfileMenu;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.HashMap;
@@ -227,6 +230,14 @@ public final class ChatListener implements Listener {
         this.statsProvider = provider == null ? StatsProvider.NONE : provider;
     }
 
+    /** Oyuncu kartı değerleri: RPG tarafının verdikleri + bizim "playtime". Profil paneli de kullanır. */
+    // shortcut: istatistik async sohbet thread'inden okunuyor (sadece okuma); sorun çıkarsa ana thread'de önbelleğe al.
+    public Map<String, String> stats(Player player) {
+        Map<String, String> stats = new HashMap<>(statsProvider.stats(player));
+        stats.putIfAbsent("playtime", Durations.format(Playtime.millis(player)));
+        return stats;
+    }
+
     /** Kilit, izin ve filtre kontrolü. Mesaj gönderilemezse oyuncuya sebebini söyler ve null döner. */
     private String prepare(Player sender, ChatChannel channel, String text) {
         boolean bypass = sender.hasPermission(BYPASS);
@@ -366,9 +377,10 @@ public final class ChatListener implements Listener {
     }
 
     private Component nameComponent(Player player) {
+        // Tıklayınca profil açılır; mesaj yazma, arkadaş ekleme ve engelleme oradan.
         return Component.text(player.getName())
-                .hoverEvent(card.render(player.getName(), statsProvider.stats(player)))
-                .clickEvent(ClickEvent.suggestCommand("/msg " + player.getName() + " "));
+                .hoverEvent(card.render(player.getName(), stats(player)))
+                .clickEvent(ClickEvent.runCommand(ProfileMenu.COMMAND + " " + player.getName()));
     }
 
     // shortcut: konum async thread'den okunuyor (yaygın ve pratikte güvenli); sorun çıkarsa konumları ana thread'de önbelleğe al.

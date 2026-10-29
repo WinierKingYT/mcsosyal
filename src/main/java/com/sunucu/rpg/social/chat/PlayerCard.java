@@ -31,19 +31,28 @@ public final class PlayerCard {
         }
     }
 
-    /** Değerler oyuncudan da gelebilir (sınıf adı vb.), bu yüzden düz metin olarak eklenir. */
+    /** Sohbette isim hover'ı: başlık, satırlar, ipucu. */
     public Component render(String name, Map<String, String> stats) {
         TextComponent.Builder card = Component.text()
                 .append(messages.get("player-card-header", Placeholder.unparsed("name", name)));
-        for (Line line : lines) {
-            String value = stats.get(line.stat());
-            if (value != null) {
-                card.appendNewline().append(Messages.parse(line.template(),
-                        Placeholder.unparsed("value", value), Placeholder.unparsed("name", name)));
-            }
+        for (Component line : lines(name, stats)) {
+            card.appendNewline().append(line);
         }
         return card.appendNewline()
                 .append(messages.get("name-hover", Placeholder.unparsed("name", name)))
                 .build();
+    }
+
+    /** Sadece değer satırları (profil panelinde açıklama olarak da kullanılır). Değerler düz metin eklenir. */
+    public List<Component> lines(String name, Map<String, String> stats) {
+        List<Component> result = new ArrayList<>();
+        for (Line line : lines) {
+            String value = stats.get(line.stat());
+            if (value != null) {
+                result.add(Messages.parse(line.template(),
+                        Placeholder.unparsed("value", value), Placeholder.unparsed("name", name)));
+            }
+        }
+        return result;
     }
 }

@@ -9,13 +9,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 
@@ -35,12 +36,15 @@ public final class FriendsMenu {
     private final FriendActions actions;
     private final Messages messages;
     private final Consumer<Player> openParent;
+    private final BiConsumer<Player, OfflinePlayer> openProfile;
 
-    public FriendsMenu(Friends friends, FriendActions actions, Messages messages, Consumer<Player> openParent) {
+    public FriendsMenu(Friends friends, FriendActions actions, Messages messages, Consumer<Player> openParent,
+                       BiConsumer<Player, OfflinePlayer> openProfile) {
         this.friends = friends;
         this.actions = actions;
         this.messages = messages;
         this.openParent = openParent;
+        this.openProfile = openProfile;
     }
 
     public void open(Player player) {
@@ -61,13 +65,11 @@ public final class FriendsMenu {
             String name = FriendActions.nameOf(friendId);
             List<Component> lore = new ArrayList<>(messages.lines(online != null ? "friend-online" : "friend-offline"));
             lore.add(Component.empty());
-            if (online != null) {
-                lore.addAll(messages.lines("friend-click-message"));
-            }
+            lore.addAll(messages.lines("friend-click-profile"));
             lore.addAll(messages.lines("friend-click-remove"));
             menu.button(slot, Icons.head(Bukkit.getOfflinePlayer(friendId),
                             messages.get("friend-head", Placeholder.unparsed("name", name)), lore),
-                    click -> onFriendClick(menu, player, friendId, name, click));
+                    click -> onFriendClick(menu, player, friendId, click));
         }
         menu.button(BACK_SLOT, Icons.icon(Material.ARROW, messages.get("menu-back"), messages.lines("menu-back-lore")),
                 click -> openParent.accept(player));
@@ -80,15 +82,13 @@ public final class FriendsMenu {
                 messages.lines("friend-info-lore", Placeholder.unparsed("max", String.valueOf(friends.maxFriends())))));
     }
 
-    /** Sol tık: mesaj yaz (çevrimiçiyse). Shift + sağ tık: arkadaşlıktan çıkar (yanlışlıkla silinmesin). */
-    private void onFriendClick(Menu menu, Player player, UUID friendId, String name, ClickType click) {
+    /** Sol tık: profili aç (mesaj oradan). Shift + sağ tık: arkadaşlıktan çıkar (yanlışlıkla silinmesin). */
+    private void onFriendClick(Menu menu, Player player, UUID friendId, ClickType click) {
         if (click == ClickType.SHIFT_RIGHT) {
             actions.remove(player, friendId);
             fill(menu, player);
-        } else if (click.isLeftClick() && Bukkit.getPlayer(friendId) != null) {
-            player.closeInventory();
-            player.sendMessage(messages.get("friend-message-prompt", Placeholder.unparsed("name", name))
-                    .clickEvent(ClickEvent.suggestCommand("/msg " + name + " ")));
+        } else if (click.isLeftClick()) {
+            openProfile.accept(player, Bukkit.getOfflinePlayer(friendId));
         }
     }
 
