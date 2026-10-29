@@ -15,6 +15,10 @@
   Örs ismi filtreden geçer. Testler 13/13. Oyunda denenmedi: hover'da eşya bilgisinin çıktığını kontrol et.
 - 2026-10-29: Güvenlik incelemesi sonrası filtre hover'daki tüm oyuncu metnine genişletildi: isim, item_name,
   lore, kitap başlığı/yazarı, shulker ve bohça içindekiler (derinlik 2). Oyunda denenmedi.
+- 2026-10-29: Konum paylaşma (`[konum]`, tıkla-kopyala, `world-names`), yetkili rozetleri (`chat.badges`,
+  `<badge>` yer tutucusu, Admin/Mod/Rehber), `/socialspy` (konsol da görür), AFK (`AfkTracker`: 300 sn,
+  `/afk`, tab'da soluk isim, AFK'ya mesaj atana not). `ItemShare` → `ChatTokens`. Testler 14/14. Oyunda denenmedi.
+  `ChatListener` 387 satır: büyürse eşya/konum görünümünü ayrı sınıfa ayır.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
@@ -30,13 +34,12 @@
 - [x] Reklam filtresi (IP ve alan adı kalıpları) + test
 - [x] Ticaret, yardım ve yetkili kanalları, `/t` `/yardım` `/sc` `/l`, kanal başına bekleme süresi
 - [ ] Kanal susturma (oyuncu tercihi; kalıcı olması için veritabanı katmanı gerekir)
-- [ ] Yardım kanalında "Rehber" etiketi (yetkili rozetleriyle birlikte yapılabilir)
 - [x] Etiketleme `@isim` + isim vurgusu + bildirim sesi (`@parti` parti sistemiyle birlikte)
 - [x] Eşya gösterme `[item]` / `[eşya]` (RPG eşyaları ItemStack olduğu sürece ek arayüz gerekmez)
-- [ ] Konum paylaşma `[konum]`
-- [ ] Yetkili rozetleri
-- [ ] Social spy
-- [ ] AFK durumu
+- [x] Konum paylaşma `[konum]`
+- [x] Yetkili rozetleri (Rehber dahil)
+- [x] Social spy
+- [x] AFK durumu
 
 ## Moderasyon (sohbete bağlı)
 - [ ] Veritabanı katmanı (SQLite). Engellemeler (`/ignore`) kalıcı hale gelir.

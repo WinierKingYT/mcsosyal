@@ -2,8 +2,21 @@
 # Oyuncunun yazdığı metin her zaman düz metin olarak eklenir, etiketleri çalışmaz.
 
 chat:
-  # <channel>, <tags>, <name>, <message> yer tutucuları kullanılabilir.
-  format: "<dark_gray>[<channel>]</dark_gray> <tags><white><name></white><gray>:</gray> <message>"
+  # <channel>, <badge>, <tags>, <name>, <message> yer tutucuları kullanılabilir.
+  format: "<dark_gray>[<channel>]</dark_gray> <badge><tags><white><name></white><gray>:</gray> <message>"
+  # Yetkili rozetleri: yukarıdan aşağı, izni olan ilk rozet gösterilir. Sondaki boşluk isimle arayı açar.
+  badges:
+    - permission: rpg.social.badge.admin
+      tag: "<dark_red>[Admin]</dark_red> "
+    - permission: rpg.social.badge.mod
+      tag: "<blue>[Mod]</blue> "
+    - permission: rpg.social.badge.helper
+      tag: "<green>[Rehber]</green> "
+  # [konum] ile paylaşılan dünyaların görünen adları.
+  world-names:
+    world: "Dünya"
+    world_nether: "Nether"
+    world_the_end: "End"
   # Kanal komutları: /l (yerel), /t (ticaret), /yardım (yardım), /sc (yetkili).
   # Bekleme süresi kanal başınadır. permission verilen kanalı sadece o izne sahip olanlar görür ve yazar.
   channels:
@@ -30,6 +43,8 @@ chat:
   sounds:
     mention: "entity.experience_orb.pickup"
     private-message: "block.note_block.pling"
+  # Bu kadar saniye hareketsiz kalan oyuncu AFK sayılır. /afk ile elle de olunur.
+  afk-after-seconds: 300
   # Bu kadar harften uzun ve çoğu büyük harfse mesaj küçültülür.
   caps-min-letters: 6
   caps-ratio: 0.7
@@ -66,6 +81,17 @@ messages:
   item: "<item>"
   item-many: "<item><gray> x<amount></gray>"
   item-empty: "<gray>[boş el]</gray>"
+  # [konum]: tıklayınca "x y z" panoya kopyalanır.
+  location: "<green>[<world> <x>, <y>, <z>]</green>"
+  location-hover: "<gray>Tıkla: koordinatları kopyala</gray>"
+  spy: "<dark_gray>[Spy] <from> → <to>:</dark_gray> <gray><message></gray>"
+  spy-on: "<gray>Social spy <green>açık</green>.</gray>"
+  spy-off: "<gray>Social spy <red>kapalı</red>.</gray>"
+  afk-on: "<gray>Artık AFK'sın.</gray>"
+  afk-off: "<gray>Artık AFK değilsin.</gray>"
+  # Tab listesinde AFK oyuncunun ismi.
+  afk-tab: "<dark_gray><name> [AFK]</dark_gray>"
+  msg-afk: "<gray><name> şu an AFK, mesajını sonra görebilir.</gray>"
   sound-on:"<gray><type> sesi <green>açık</green>.</gray>"
   sound-off: "<gray><type> sesi <red>kapalı</red>.</gray>"
   name-hover:"<gray>Tıkla: <white><name></white> oyuncusuna özel mesaj</gray>"

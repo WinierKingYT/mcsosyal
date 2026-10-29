@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -20,6 +21,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -47,6 +49,8 @@ public final class ChatListener implements Listener {
     private final String format;
     private final String localPrefix;
     private final Map<String, ChatChannel> channels = new LinkedHashMap<>();
+    private final Map<String, Component> badges = new LinkedHashMap<>();
+    private final Map<String, String> worldNames = new HashMap<>();
     private volatile TagProvider tagProvider = TagProvider.NONE;
     private volatile boolean locked;
 
@@ -67,6 +71,14 @@ public final class ChatListener implements Listener {
         }
         channels.putIfAbsent(ChatChannel.GLOBAL, new ChatChannel(ChatChannel.GLOBAL, Component.text("G"), 2000, null, 0));
         channels.putIfAbsent(ChatChannel.LOCAL, new ChatChannel(ChatChannel.LOCAL, Component.text("Y"), 2000, null, 64));
+        // Sıra önemli: config'deki ilk eşleşen rozet gösterilir.
+        for (Map<?, ?> badge : chat.getMapList("badges")) {
+            badges.put(String.valueOf(badge.get("permission")), Messages.parse(String.valueOf(badge.get("tag"))));
+        }
+        ConfigurationSection worlds = chat.getConfigurationSection("world-names");
+        if (worlds != null) {
+            worlds.getKeys(false).forEach(world -> worldNames.put(world, worlds.getString(world)));
+        }
     }
 
     /** Normal sohbet: global, ya da önek varsa yerel. İmzalı sohbet korunur. */
@@ -81,11 +93,12 @@ public final class ChatListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        Component item = ItemShare.hasToken(filtered) ? sharedItem(sender) : null;
-        if (ItemShare.hasToken(filtered) && item == null) {
+        Component item = ChatTokens.has(ChatTokens.ITEM, filtered) ? sharedItem(sender) : null;
+        if (ChatTokens.has(ChatTokens.ITEM, filtered) && item == null) {
             event.setCancelled(true);
             return;
         }
+        Component location = ChatTokens.has(ChatTokens.LOCATION, filtered) ? sharedLocation(sender) : null;
 
         // Oyuncu metni düz metin olarak girer, MiniMessage etiketleri çalışmaz.
         event.message(Component.text(filtered));
@@ -94,7 +107,7 @@ public final class ChatListener implements Listener {
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         // Her izleyici kendi adını vurgulu görür, bu yüzden renderer izleyiciye göre çalışır.
         ChatRenderer renderer = (source, displayName, message, viewer) ->
-                render(sender, channel, tags, withItem(mentionMessage(filtered, mentions, viewer), item));
+                render(sender, channel, tags, decorate(mentionMessage(filtered, mentions, viewer), item, location));
         event.renderer(renderer);
 
         Set<Audience> viewers = Set.copyOf(event.viewers());
@@ -115,10 +128,11 @@ public final class ChatListener implements Listener {
         if (filtered == null) {
             return;
         }
-        Component item = ItemShare.hasToken(filtered) ? sharedItem(sender) : null;
-        if (ItemShare.hasToken(filtered) && item == null) {
+        Component item = ChatTokens.has(ChatTokens.ITEM, filtered) ? sharedItem(sender) : null;
+        if (ChatTokens.has(ChatTokens.ITEM, filtered) && item == null) {
             return;
         }
+        Component location = ChatTokens.has(ChatTokens.LOCATION, filtered) ? sharedLocation(sender) : null;
         Component tags = tagProvider.tags(sender);
         List<Mentions.Span> mentions = Mentions.find(filtered, onlineNames());
         Set<Player> viewers = new HashSet<>();
@@ -126,11 +140,11 @@ public final class ChatListener implements Listener {
             if (canSee(channel, sender, viewer)) {
                 viewers.add(viewer);
                 viewer.sendMessage(render(sender, channel, tags,
-                        withItem(mentionMessage(filtered, mentions, viewer), item)));
+                        decorate(mentionMessage(filtered, mentions, viewer), item, location)));
             }
         }
         Bukkit.getConsoleSender().sendMessage(render(sender, channel, tags,
-                withItem(Component.text(filtered), item)));
+                decorate(Component.text(filtered), item, location)));
         notifyMentioned(sender, mentions, viewers::contains);
     }
 
@@ -272,12 +286,40 @@ public final class ChatListener implements Listener {
         return component == null ? "" : PlainTextComponentSerializer.plainText().serialize(component);
     }
 
-    // Mesaj başına sadece ilk [item] değiştirilir, gerisi düz metin kalır (hover spam'ine karşı).
-    private static Component withItem(Component message, Component item) {
-        if (item == null) {
+    // shortcut: konum async thread'den okunuyor, inRange ile aynı varsayım.
+    private Component sharedLocation(Player sender) {
+        Location location = sender.getLocation();
+        String world = worldNames.getOrDefault(location.getWorld().getName(), location.getWorld().getName());
+        String coordinates = location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ();
+        return messages.get("location",
+                        Placeholder.unparsed("world", world),
+                        Placeholder.unparsed("x", String.valueOf(location.getBlockX())),
+                        Placeholder.unparsed("y", String.valueOf(location.getBlockY())),
+                        Placeholder.unparsed("z", String.valueOf(location.getBlockZ())))
+                .hoverEvent(messages.get("location-hover"))
+                .clickEvent(ClickEvent.copyToClipboard(coordinates));
+    }
+
+    // Mesaj başına sadece ilk [item] ve ilk [konum] değiştirilir, gerisi düz metin kalır (hover spam'ine karşı).
+    private static Component decorate(Component message, Component item, Component location) {
+        return replaceOnce(replaceOnce(message, ChatTokens.ITEM, item), ChatTokens.LOCATION, location);
+    }
+
+    private static Component replaceOnce(Component message, Pattern token, Component replacement) {
+        if (replacement == null) {
             return message;
         }
-        return message.replaceText(config -> config.match(ItemShare.TOKEN).once().replacement(item));
+        return message.replaceText(config -> config.match(token).once().replacement(replacement));
+    }
+
+    /** config → chat.badges: izni olan ilk rozet. Yoksa boş. */
+    private Component badgeFor(Player player) {
+        for (Map.Entry<String, Component> badge : badges.entrySet()) {
+            if (player.hasPermission(badge.getKey())) {
+                return badge.getValue();
+            }
+        }
+        return Component.empty();
     }
 
     /** "@isim" herkese renkli görünür; izleyicinin kendi adı (@'li ya da @'siz) ona vurgulu görünür. */
@@ -325,6 +367,7 @@ public final class ChatListener implements Listener {
     private Component render(Player sender, ChatChannel channel, Component tags, Component message) {
         return Messages.parse(format,
                 Placeholder.component("channel", channel.tag()),
+                Placeholder.component("badge", badgeFor(sender)),
                 Placeholder.component("tags", tags),
                 Placeholder.component("name", nameComponent(sender)),
                 Placeholder.component("message", message));

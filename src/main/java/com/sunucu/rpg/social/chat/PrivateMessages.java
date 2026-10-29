@@ -1,28 +1,36 @@
 package com.sunucu.rpg.social.chat;
 
 import com.sunucu.rpg.core.Messages;
+import com.sunucu.rpg.social.AfkTracker;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-/** /msg, /r ve /ignore. */
+/** /msg, /r, /ignore ve /socialspy. */
 public final class PrivateMessages {
+
+    public static final String SPY = "rpg.social.chat.spy";
 
     private final Messages messages;
     private final ChatFilter filter;
     private final Notifications notifications;
+    private final AfkTracker afk;
+    // shortcut: spy listesi bellekte, yeniden başlatınca kapanır (güvenli varsayılan).
+    private final Set<UUID> spies = ConcurrentHashMap.newKeySet();
     // shortcut: engellemeler bellekte, yeniden başlatınca silinir; veritabanı katmanı gelince kalıcı yap.
     private final Map<UUID, Set<UUID>> ignores = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> lastPartner = new ConcurrentHashMap<>();
 
-    public PrivateMessages(Messages messages, ChatFilter filter, Notifications notifications) {
+    public PrivateMessages(Messages messages, ChatFilter filter, Notifications notifications, AfkTracker afk) {
         this.messages = messages;
         this.filter = filter;
         this.notifications = notifications;
+        this.afk = afk;
     }
 
     public boolean isIgnoring(Player who, Player target) {
@@ -58,8 +66,37 @@ public final class PrivateMessages {
         to.sendMessage(messages.get("msg-from",
                 Placeholder.unparsed("name", from.getName()), Placeholder.unparsed("message", text)));
         notifications.play(to, Notifications.Type.PRIVATE_MESSAGE);
+        if (afk.isAfk(to)) {
+            from.sendMessage(messages.get("msg-afk", Placeholder.unparsed("name", to.getName())));
+        }
         lastPartner.put(from.getUniqueId(), to.getUniqueId());
         lastPartner.put(to.getUniqueId(), from.getUniqueId());
+        spy(from, to, text);
+    }
+
+    /** @return true ise social spy artık açık. */
+    public boolean toggleSpy(Player player) {
+        if (spies.remove(player.getUniqueId())) {
+            return false;
+        }
+        spies.add(player.getUniqueId());
+        return true;
+    }
+
+    /** Taciz şikayetleri için: izni olan spy'lar ve konsol, taraf olmadıkları özel mesajları görür. */
+    private void spy(Player from, Player to, String text) {
+        Component line = messages.get("spy",
+                Placeholder.unparsed("from", from.getName()),
+                Placeholder.unparsed("to", to.getName()),
+                Placeholder.unparsed("message", text));
+        for (UUID spyId : spies) {
+            Player spy = Bukkit.getPlayer(spyId);
+            // İzni sonradan alınan yetkili artık görmez.
+            if (spy != null && !spy.equals(from) && !spy.equals(to) && spy.hasPermission(SPY)) {
+                spy.sendMessage(line);
+            }
+        }
+        Bukkit.getConsoleSender().sendMessage(line);
     }
 
     public void reply(Player from, String text) {

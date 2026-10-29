@@ -12,6 +12,18 @@ permissions:
   rpg.social.chat.staff:
     description: Yetkili sohbet kanalını görme ve yazma (/sc)
     default: op
+  rpg.social.chat.spy:
+    description: Başkalarının özel mesajlarını görme (/socialspy)
+    default: op
+  rpg.social.badge.admin:
+    description: Sohbette [Admin] rozeti
+    default: op
+  rpg.social.badge.mod:
+    description: Sohbette [Mod] rozeti
+    default: false
+  rpg.social.badge.helper:
+    description: Sohbette [Rehber] rozeti (yardım kanalı gönüllüleri)
+    default: false
   rpg.social.chat.bypass:
     description: Filtre, bekleme süresi ve kilide takılmama
     default: op

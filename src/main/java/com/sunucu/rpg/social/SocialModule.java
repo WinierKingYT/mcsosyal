@@ -25,11 +25,14 @@ public final class SocialModule implements Module {
         Messages messages = new Messages(plugin.getConfig().getConfigurationSection("messages"));
         ChatFilter filter = ChatFilter.fromConfig(config);
         Notifications notifications = new Notifications(config.getConfigurationSection("sounds"));
-        PrivateMessages privateMessages = new PrivateMessages(messages, filter, notifications);
+        AfkTracker afk = new AfkTracker(messages, config.getLong("afk-after-seconds", 300));
+        PrivateMessages privateMessages = new PrivateMessages(messages, filter, notifications, afk);
         chat = new ChatListener(plugin, config, messages, filter, privateMessages, notifications);
 
         plugin.getServer().getPluginManager().registerEvents(chat, plugin);
-        ChatCommands.register(plugin, chat, privateMessages, notifications, messages);
+        plugin.getServer().getPluginManager().registerEvents(afk, plugin);
+        afk.start(plugin);
+        ChatCommands.register(plugin, chat, privateMessages, notifications, afk, messages);
     }
 
     public void setTagProvider(TagProvider provider) {

@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.sunucu.rpg.core.Messages;
+import com.sunucu.rpg.social.AfkTracker;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
@@ -19,7 +20,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** /chat clear|lock, /msg, /r, /ignore, /bildirim ve kanal komutları (/l, /t, /yardım, /sc). */
+/** /chat clear|lock, /msg, /r, /ignore, /bildirim, /socialspy, /afk ve kanal komutları (/l, /t, /yardım, /sc). */
 public final class ChatCommands {
 
     public static final String MODERATE = "rpg.social.chat.moderate";
@@ -29,7 +30,7 @@ public final class ChatCommands {
     }
 
     public static void register(JavaPlugin plugin, ChatListener chat, PrivateMessages pm,
-                                Notifications notifications, Messages messages) {
+                                Notifications notifications, AfkTracker afk, Messages messages) {
         plugin.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
             Commands commands = event.registrar();
 
@@ -88,7 +89,24 @@ public final class ChatCommands {
                     .then(soundToggle("mesaj", Notifications.Type.PRIVATE_MESSAGE, "Özel mesaj", notifications, messages))
                     .build(), "Bildirim seslerini aç ya da kapat");
 
-            registerChannel(commands, chat, "l",ChatChannel.LOCAL, "Yerel kanala yaz", List.of());
+            commands.register(Commands.literal("socialspy")
+                    .requires(src -> src.getSender() instanceof Player player && player.hasPermission(PrivateMessages.SPY))
+                    .executes(ctx -> {
+                        Player player = (Player) ctx.getSource().getSender();
+                        player.sendMessage(messages.get(pm.toggleSpy(player) ? "spy-on" : "spy-off"));
+                        return Command.SINGLE_SUCCESS;
+                    })
+                    .build(), "Başkalarının özel mesajlarını gör", List.of("spy"));
+
+            commands.register(Commands.literal("afk")
+                    .requires(src -> src.getSender() instanceof Player)
+                    .executes(ctx -> {
+                        afk.toggle((Player) ctx.getSource().getSender());
+                        return Command.SINGLE_SUCCESS;
+                    })
+                    .build(), "AFK ol ya da AFK'dan çık");
+
+            registerChannel(commands, chat, "l", ChatChannel.LOCAL, "Yerel kanala yaz", List.of());
             registerChannel(commands, chat, "t", "trade", "Ticaret kanalına yaz", List.of("ticaret"));
             registerChannel(commands, chat, "yardım", "help", "Yardım kanalına yaz", List.of("yardim"));
             registerChannel(commands, chat, "sc", "staff", "Yetkili kanalına yaz", List.of());
