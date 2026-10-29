@@ -59,13 +59,20 @@
   Kafa + kart satırları, oynama süresi (Minecraft `PLAY_ONE_MINUTE`, AFK dahil), ilk giriş, son görülme, mesaj,
   arkadaşlık (duruma göre ekle/kabul/reddet/çıkar), engelle. Kartta `playtime` satırı. Arkadaş panelinde sol tık
   profili açar. Testler 52/52. Oyunda denenmedi.
+- 2026-10-29: Duyuru sistemi (`social.announce`): `announcements.tips` sırayla, 5 dk aralıkla (0: kapalı), tam
+  MiniMessage (sahip yazar); oyuncu Bildirimler'den kapatır. `/duyuru` (`rpg.social.announce`): sohbet + ekran
+  yazısı + ses; yetkili metni `Messages.parseFormatting` ile, tıklama/hover çalışmaz. Testler 56/56. Oyunda denenmedi.
 
 ## Yol haritası (sahibin seçtiği sıra)
 1. [x] Arkadaş listesi
 2. [x] Oyuncu profili (`/profil`, kart + oynama süresi + arkadaş ekle butonu)
-3. [ ] Duyuru sistemi
+3. [x] Duyuru sistemi
 4. [ ] Moderasyon (mute/ban/uyarı, `/report`, sohbet logu)
 5. [ ] Belki parti sistemi (arkadaşla sınır konuşulacak)
+
+## Oyunda doğrulanacak (duyuru)
+- [ ] İpucu 5 dk'da bir geliyor, `/sosyal`'a tıklama çalışıyor, Bildirimler'den kapatınca gelmiyor
+- [ ] `/duyuru <red>Bakım` sohbette, ekran ortasında ve sesle; konsoldan da çalışıyor
 
 ## Oyunda doğrulanacak (profil)
 - [ ] Sohbette isme tıklayınca profil açılıyor mu; `/profil` çevrimdışı oyuncuda süre ve son görülme doğru mu

@@ -31,6 +31,8 @@ Nerede kaldığımız: [docs/NEXT.md](docs/NEXT.md). Sohbet tasarımı: [docs/CH
 ## Değişmez kurallar
 - Oyuncunun yazdığı metin **asla** MiniMessage olarak işlenmez. Her zaman `Placeholder.unparsed` /
   `Placeholder.component` / `Component.text` ile eklenir.
+- Yetkilinin yazdığı metin (ör. `/duyuru`) `Messages.parseFormatting` ile: renk olur, tıklama/hover olmaz.
+  Tam MiniMessage sadece sunucu sahibinin config metninde.
 - Sohbet formatı `ChatRenderer` ile yapılır. Mesajı iptal edip yeniden yayınlama, imzalı sohbeti bozar.
 - `AsyncChatEvent` ana thread'de değil: dünyaya ve varlıklara yazma yapma, config'i olay içinde okuma.
 - Karşılaştırmada `toLowerCase(Locale.ROOT)`, oyuncuya gösterilen Türkçe metinde `Locale.forLanguageTag("tr")`.

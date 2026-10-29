@@ -73,6 +73,7 @@ chat:
     mention: "entity.experience_orb.pickup"
     private-message: "block.note_block.pling"
     friend: "block.note_block.chime"
+    announcement: "block.note_block.bell"
   # Arkadaş sınırı; panel tek sayfa olduğu için en fazla 45.
   friends:
     max: 45
@@ -226,6 +227,10 @@ messages:
   profile-not-ignored-lore: "<gray>Tıkla: bu oyuncunun mesajlarını\n<gray>ve sohbetini görme."
   profile-ignored-lore: "<red>Engellendi.</red>\n<gray>Tıkla: <white>engeli kaldır</white></gray>"
   profile-unknown: "<red><name> diye bir oyuncu bu sunucuya hiç girmemiş.</red>"
+  # Duyurular. <message> ipucu ya da yetkilinin yazdığı metin.
+  announcement-tip: "<gold>[İpucu]</gold> <gray><message>"
+  announcement-chat: "<red><bold>[DUYURU]</bold></red> <white><message>"
+  announcement-title: "<gold><bold>Duyuru</bold></gold>"
   friend-joined: "<green>▶</green> <gray>Arkadaşın <white><name></white><gray> oyuna girdi.</gray>"
   friend-left: "<red>◀</red> <gray>Arkadaşın <white><name></white><gray> oyundan çıktı.</gray>"
   friend-requests-waiting: "<gold><count> bekleyen arkadaşlık isteğin var.</gold> <gray>Görmek için tıkla.</gray>"
@@ -244,8 +249,21 @@ messages:
   notify-private-message-lore: "<gray>Sana <white>/msg</white><gray> gelince ses."
   notify-friend: "<green>Arkadaşlar</green>"
   notify-friend-lore: "<gray>Arkadaşın oyuna girip çıkınca\n<gray>ve arkadaşlık isteği gelince bildirim."
+  notify-tips: "<gold>İpuçları</gold>"
+  notify-tips-lore: "<gray>Belli aralıklarla gelen\n<gray>ipucu mesajları."
   notify-on: "<green>Açık</green>\n<gray>Tıkla: kapat</gray>"
   notify-off: "<red>Kapalı</red>\n<gray>Tıkla: aç</gray>"
+
+# Otomatik ipuçları: interval-seconds aralıkla sırayla gönderilir (0: kapalı). Oyuncu /sosyal → Bildirimler'den
+# kapatır. Tam MiniMessage çalışır (tıklanabilir bağlantı dahil); <name> okuyanın adı, <online> çevrimiçi sayısı.
+announcements:
+  interval-seconds: 300
+  tips:
+    - "Sohbet kanalını değiştirmek için <click:run_command:/sosyal><white><u>/sosyal</u></white></click> yaz."
+    - "Elindeki eşyayı sohbette göstermek için mesajına <white>[i]</white> ekle, envanterin için <white>[inv]</white>."
+    - "Arkadaş eklemek için <white>/arkadaş ekle isim</white> yaz."
+    - "Bir oyuncunun profilini görmek için sohbette ismine tıkla."
+    - "Sadece yakındakilere yazmak için mesajının başına <white>!</white> koy."
 
 # İsimli bölgeler: [konum] paylaşımında koordinatla birlikte bölge adı görünür.
 # from/to iki köşenin [x, z] koordinatı, yükseklik fark etmez. İç içe bölgelerde küçük olanı üste yaz.

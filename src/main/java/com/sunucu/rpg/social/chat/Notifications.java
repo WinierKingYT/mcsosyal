@@ -19,7 +19,8 @@ import org.bukkit.entity.Player;
 /** Etiket, özel mesaj ve arkadaş bildirimleri (ses, etikette ekran yazısı); oyuncu her birini ayrı kapatabilir. */
 public final class Notifications {
 
-    public enum Type { MENTION, PRIVATE_MESSAGE, FRIEND }
+    /** TIPS: otomatik ipuçları; sesi yok, sadece açılıp kapanır. */
+    public enum Type { MENTION, PRIVATE_MESSAGE, FRIEND, TIPS }
 
     private static final Title.Times TITLE_TIMES =
             Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1500), Duration.ofMillis(400));
@@ -78,8 +79,9 @@ public final class Notifications {
     }
 
     public void play(Player player, Type type) {
-        if (!muted.get(type).contains(player.getUniqueId())) {
-            player.playSound(sounds.get(type));
+        Sound sound = sounds.get(type);
+        if (sound != null && !muted.get(type).contains(player.getUniqueId())) {
+            player.playSound(sound);
         }
     }
 

@@ -15,6 +15,9 @@ permissions:
   rpg.social.chat.spy:
     description: Başkalarının özel mesajlarını görme (/socialspy)
     default: op
+  rpg.social.announce:
+    description: Herkese duyuru yapma (/duyuru)
+    default: op
   rpg.social.inventory.edit:
     description: Sohbette paylaşılan [inv]'e tıklayınca oyuncunun gerçek envanterini açıp düzenleme
     default: op

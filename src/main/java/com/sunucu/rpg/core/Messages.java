@@ -7,6 +7,7 @@ import java.util.Map;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.bukkit.configuration.ConfigurationSection;
 
 /**
@@ -17,6 +18,11 @@ import org.bukkit.configuration.ConfigurationSection;
 public final class Messages {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
+    // Sadece renk ve biçim; tıklama, hover, komut gibi etiketler düz yazı kalır.
+    private static final MiniMessage FORMATTING_ONLY = MiniMessage.builder()
+            .tags(TagResolver.resolver(StandardTags.color(), StandardTags.decorations(), StandardTags.gradient(),
+                    StandardTags.rainbow(), StandardTags.reset(), StandardTags.newline()))
+            .build();
 
     private final Map<String, String> templates = new HashMap<>();
 
@@ -41,5 +47,13 @@ public final class Messages {
 
     public static Component parse(String template, TagResolver... resolvers) {
         return MINI.deserialize(template, resolvers);
+    }
+
+    /**
+     * Yetkilinin yazdığı metin için (ör. /duyuru): renk ve biçim çalışır, tıklama ve hover çalışmaz. Böylece
+     * ele geçirilmiş bir yetkili hesabı herkese komut çalıştırtan bir duyuru atamaz. Oyuncu metni için değil.
+     */
+    public static Component parseFormatting(String text) {
+        return FORMATTING_ONLY.deserialize(text);
     }
 }

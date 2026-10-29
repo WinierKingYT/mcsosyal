@@ -32,9 +32,10 @@ public final class SocialMenu {
     private static final int MAIN_NOTIFICATIONS_SLOT = 15;
     private static final int FIRST_CHANNEL_SLOT = 10;
     private static final int MAX_CHANNELS = 7;
-    private static final int MENTION_SLOT = 11;
-    private static final int FRIEND_SLOT = 13;
-    private static final int PRIVATE_MESSAGE_SLOT = 15;
+    private static final int MENTION_SLOT = 10;
+    private static final int FRIEND_SLOT = 12;
+    private static final int PRIVATE_MESSAGE_SLOT = 14;
+    private static final int TIPS_SLOT = 16;
     private static final int BACK_SLOT = 18;
 
     private final Messages messages;
@@ -125,6 +126,9 @@ public final class SocialMenu {
         menu.button(PRIVATE_MESSAGE_SLOT, toggleIcon(player, Notifications.Type.PRIVATE_MESSAGE, Material.PAPER,
                         messages.get("notify-private-message"), messages.lines("notify-private-message-lore")),
                 click -> toggle(menu, player, Notifications.Type.PRIVATE_MESSAGE));
+        menu.button(TIPS_SLOT, toggleIcon(player, Notifications.Type.TIPS, Material.LANTERN,
+                        messages.get("notify-tips"), messages.lines("notify-tips-lore")),
+                click -> toggle(menu, player, Notifications.Type.TIPS));
         menu.button(BACK_SLOT, back(), click -> openMain(player));
     }
 

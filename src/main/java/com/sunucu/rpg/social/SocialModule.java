@@ -3,6 +3,7 @@ package com.sunucu.rpg.social;
 import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.core.Module;
 import com.sunucu.rpg.core.db.Database;
+import com.sunucu.rpg.social.announce.Announcements;
 import com.sunucu.rpg.social.chat.ChannelPreferences;
 import com.sunucu.rpg.social.chat.ChatCommands;
 import com.sunucu.rpg.social.chat.ChatFilter;
@@ -77,6 +78,11 @@ public final class SocialModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(friendActions, plugin);
         FriendCommands.register(plugin, friends, friendActions, menu.friendsMenu(), messages);
         ProfileCommand.register(plugin, profile, messages);
+        Announcements announcements = new Announcements(messages, notifications,
+                plugin.getConfig().getConfigurationSection("announcements"),
+                Announcements.sound(config.getConfigurationSection("sounds")));
+        announcements.register(plugin);
+        announcements.start(plugin);
         plugin.getServer().getPluginManager().registerEvents(new LiveInventoryView.Protection(plugin), plugin);
         afk.start(plugin);
         ChatCommands.register(plugin, chat, privateMessages, afk, menu, mutes, messages);
