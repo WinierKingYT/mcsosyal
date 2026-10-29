@@ -4,6 +4,7 @@ import com.sunucu.rpg.core.Messages;
 import com.sunucu.rpg.social.TagProvider;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -25,12 +26,18 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.block.Container;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.BundleMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ChatListener implements Listener {
 
     public static final String BYPASS = "rpg.social.chat.bypass";
+    private static final int MAX_ITEM_DEPTH = 2;
 
     private final JavaPlugin plugin;
     private final Messages messages;
@@ -205,9 +212,8 @@ public final class ChatListener implements Listener {
         if (hand.isEmpty()) {
             return messages.get("item-empty");
         }
-        Component customName = hand.hasItemMeta() ? hand.getItemMeta().customName() : null;
-        if (customName != null && !sender.hasPermission(BYPASS)) {
-            ChatFilter.Verdict verdict = filter.checkContent(PlainTextComponentSerializer.plainText().serialize(customName));
+        if (!sender.hasPermission(BYPASS)) {
+            ChatFilter.Verdict verdict = filter.checkContent(String.join("\n", hoverTexts(hand, 0)));
             if (verdict != ChatFilter.Verdict.OK) {
                 sender.sendMessage(messages.get(messageKey(verdict)));
                 return null;
@@ -216,6 +222,54 @@ public final class ChatListener implements Listener {
         return messages.get(hand.getAmount() > 1 ? "item-many" : "item",
                 Placeholder.component("item", hand.displayName()),
                 Placeholder.unparsed("amount", String.valueOf(hand.getAmount())));
+    }
+
+    /**
+     * Eşya kutusunda görünen ve oyuncunun yazabildiği metinler: isim, lore, kitap başlığı ve yazarı,
+     * shulker kutusu ve bohça içindeki eşyalar. Hepsi filtreden geçmeli, yoksa reklam hover'a saklanır.
+     */
+    private static List<String> hoverTexts(ItemStack item, int depth) {
+        List<String> texts = new ArrayList<>();
+        if (!item.hasItemMeta()) {
+            return texts;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta.hasCustomName()) {
+            texts.add(plain(meta.customName()));
+        }
+        if (meta.hasItemName()) {
+            texts.add(plain(meta.itemName()));
+        }
+        if (meta.hasLore()) {
+            meta.lore().forEach(line -> texts.add(plain(line)));
+        }
+        if (meta instanceof BookMeta book) {
+            if (book.hasTitle()) {
+                texts.add(plain(book.title()));
+            }
+            if (book.hasAuthor()) {
+                texts.add(plain(book.author()));
+            }
+        }
+        // Bohça içinde bohça olabilir; derinlik sınırı sonsuz döngüye ve ağır eşyalara karşı.
+        if (depth < MAX_ITEM_DEPTH) {
+            if (meta instanceof BundleMeta bundle) {
+                bundle.getItems().forEach(inner -> texts.addAll(hoverTexts(inner, depth + 1)));
+            }
+            if (meta instanceof BlockStateMeta blockMeta && blockMeta.hasBlockState()
+                    && blockMeta.getBlockState() instanceof Container container) {
+                for (ItemStack inner : container.getInventory().getContents()) {
+                    if (inner != null) {
+                        texts.addAll(hoverTexts(inner, depth + 1));
+                    }
+                }
+            }
+        }
+        return texts;
+    }
+
+    private static String plain(Component component) {
+        return component == null ? "" : PlainTextComponentSerializer.plainText().serialize(component);
     }
 
     // Mesaj başına sadece ilk [item] değiştirilir, gerisi düz metin kalır (hover spam'ine karşı).

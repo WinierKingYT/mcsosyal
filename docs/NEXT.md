@@ -13,6 +13,8 @@
 - 2026-10-29: Eşya gösterme. `[item]` / `[eşya]` eldeki eşyayı gösterir (Paper `ItemStack#displayName()`,
   üstüne gelince vanilla eşya bilgisi; RPG eşyalarının lore'u da otomatik görünür). Mesaj başına ilk etiket.
   Örs ismi filtreden geçer. Testler 13/13. Oyunda denenmedi: hover'da eşya bilgisinin çıktığını kontrol et.
+- 2026-10-29: Güvenlik incelemesi sonrası filtre hover'daki tüm oyuncu metnine genişletildi: isim, item_name,
+  lore, kitap başlığı/yazarı, shulker ve bohça içindekiler (derinlik 2). Oyunda denenmedi.
 
 ## Sohbet — 1. sürüm
 - [x] Format + ChatRenderer, isme hover ve tıkla-mesaj
